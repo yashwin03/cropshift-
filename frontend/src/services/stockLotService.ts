@@ -68,3 +68,39 @@ export const getOpenStockLots = async (): Promise<StockLotMarketplaceView[]> => 
   const response = await apiClient.get<StockLotMarketplaceView[]>('/api/v1/stock-lots/open');
   return response.data;
 };
+
+export const uploadQualityCertificate = async (
+  stockId: number,
+  file: File
+): Promise<StockLot> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post<StockLot>(
+    `/api/v1/farmer/stock-lots/${stockId}/quality-certificate`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+};
+
+export const getQualityCertificateBlob = async (
+  stockId: number
+): Promise<{ blob: Blob; filename: string }> => {
+  const response = await apiClient.get(`/api/v1/stock-lots/${stockId}/certificate`, {
+    responseType: 'blob',
+  });
+  const contentDisposition = response.headers['content-disposition'];
+  let filename = `quality_certificate_${stockId}.pdf`;
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+  return { blob: response.data, filename };
+};
+

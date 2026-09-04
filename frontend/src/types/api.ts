@@ -167,6 +167,7 @@ export interface SubsidyScheme {
   required_information: string[];
   support_information: string;
   verification_required: boolean;
+  official_url?: string;
   data_source: string;
 }
 
@@ -530,8 +531,8 @@ export interface TradeOrderCancelRequest {
 
 export interface TradeOrder {
   id: number;
-  stock_bid_id: number;
-  stock_lot_id: number;
+  stock_bid_id: number | null;
+  stock_lot_id: number | null;
   buyer_id: number;
   farmer_id: number;
   allocated_quantity_quintals: number;
@@ -549,5 +550,58 @@ export interface TradeOrder {
   farmer_display_id?: string | null;
   contact_sharing_status?: string | null;
 }
+
+// 10.14 Crop Cultivation Record Types
+export type CultivationStage = 'PLANNED' | 'GROWING' | 'READY_FOR_HARVEST' | 'HARVESTED';
+export type EvidenceStatus = 'FARMER_DECLARED' | 'FIELD_EVIDENCE' | 'VERIFIED';
+
+export interface CropCultivationRecord {
+  id: number;
+  farmer_id: number;
+  farm_id: number;
+  crop_id: number;
+  crop_name: string;
+  variety?: string | null;
+  area_acres: number;
+  cultivation_stage: CultivationStage;
+  sowing_date?: string | null;
+  expected_harvest_date?: string | null;
+  expected_yield_quintals?: number | null;
+  actual_harvest_quantity_quintals?: number | null;
+  evidence_status: EvidenceStatus;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  district?: string | null;
+  state?: string | null;
+}
+
+export interface CropCultivationCreatePayload {
+  farm_id: number;
+  crop_id: number;
+  variety?: string;
+  area_acres: number;
+  cultivation_stage: CultivationStage;
+  sowing_date?: string;
+  expected_harvest_date?: string;
+  expected_yield_quintals?: number;
+  notes?: string;
+}
+
+export interface CropCultivationUpdatePayload {
+  variety?: string;
+  area_acres?: number;
+  cultivation_stage?: CultivationStage;
+  sowing_date?: string;
+  expected_harvest_date?: string;
+  expected_yield_quintals?: number;
+  notes?: string;
+}
+
+export interface RecordHarvestPayload {
+  actual_harvest_quantity_quintals: number;
+  notes?: string;
+}
+
 
 

@@ -17,28 +17,11 @@ from ...schemas.future_crop_lot import (
     FutureCropLotMarketplaceView,
 )
 from .auth import get_current_user, require_role
+from .farms import resolve_farmer_farm
+from ...services.market_service import validate_target_price_bounds
+
 
 router = APIRouter()
-
-
-def _verify_farm_ownership(farm: Farm, current_user: User):
-    """Verify farm exists and is owned by the current authenticated user."""
-    if not farm:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Farm not found."
-        )
-    # Check owner_id or farmer relationship
-    if farm.owner_id and farm.owner_id == current_user.id:
-        return True
-    if farm.farmer and getattr(farm.farmer, "user_id", None) == current_user.id:
-        return True
-    if farm.farmer_id == current_user.id:
-        return True
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="You do not own this farm."
-    )
 
 
 def _enrich_lot_response(lot: FutureCropLot) -> FutureCropLotResponse:
@@ -71,15 +54,15 @@ def _enrich_marketplace_view(lot: FutureCropLot) -> FutureCropLotMarketplaceView
 # --- FARMER ENDPOINTS ---
 
 @router.post("/farmer/future-crop-lots", response_model=FutureCropLotResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/future-crop-lots", response_model=FutureCropLotResponse, status_code=status.HTTP_201_CREATED)
 def create_future_crop_lot(
     payload: FutureCropLotCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.FARMER)),
 ):
     """Create a new Future Crop Lot (FARMER role required)."""
-    # 1. Verify Farm & Ownership
-    farm = db.query(Farm).filter(Farm.id == payload.farm_id).first()
-    _verify_farm_ownership(farm, current_user)
+    # 1. Resolve Farm & Ownership dynamically
+    farm = resolve_farmer_farm(db, current_user, payload.farm_id)
 
     # 2. Verify Crop
     crop = db.query(Crop).filter(Crop.id == payload.crop_id).first()
@@ -88,6 +71,11 @@ def create_future_crop_lot(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Crop with id {payload.crop_id} not found."
         )
+
+    # 2b. Validate asking price bounds
+    if payload.asking_price_per_quintal is not None:
+        validate_target_price_bounds(db, payload.crop_id, payload.asking_price_per_quintal, farm.id)
+
 
     # 3. Verify optional demand_id linkage
     if payload.demand_id:
@@ -116,7 +104,7 @@ def create_future_crop_lot(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Recommendation with id {payload.recommendation_id} not found."
             )
-        if rec.farm_id != payload.farm_id:
+        if rec.farm_id != farm.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Recommendation does not belong to the selected farm."
@@ -124,8 +112,31 @@ def create_future_crop_lot(
 
     initial_status = payload.status or FutureCropLotStatus.DRAFT
 
+    # Duplicate protection check (Requirement 5)
+    existing_lot = (
+        db.query(FutureCropLot)
+        .filter(
+            FutureCropLot.farmer_id == current_user.id,
+            FutureCropLot.crop_id == payload.crop_id,
+            FutureCropLot.farm_id == farm.id,
+            FutureCropLot.planned_acres == payload.planned_acres,
+            FutureCropLot.status.in_([
+                FutureCropLotStatus.DRAFT,
+                FutureCropLotStatus.OPEN,
+                FutureCropLotStatus.INDICATIVE_ACCEPTED
+            ])
+        )
+        .first()
+    )
+    if existing_lot:
+        if initial_status == FutureCropLotStatus.OPEN and existing_lot.status == FutureCropLotStatus.DRAFT:
+            existing_lot.status = FutureCropLotStatus.OPEN
+            db.commit()
+            db.refresh(existing_lot)
+        return _enrich_lot_response(existing_lot)
+
     lot = FutureCropLot(
-        farm_id=payload.farm_id,
+        farm_id=farm.id,
         farmer_id=current_user.id,
         crop_id=payload.crop_id,
         demand_id=payload.demand_id,
@@ -209,12 +220,16 @@ def update_future_crop_lot(
 
     # If updating farm_id, verify ownership
     if payload.farm_id and payload.farm_id != lot.farm_id:
-        farm = db.query(Farm).filter(Farm.id == payload.farm_id).first()
-        _verify_farm_ownership(farm, current_user)
+        resolve_farmer_farm(db, current_user, payload.farm_id)
 
-    # If updating demand_id, verify active status and crop match
+
     target_crop_id = payload.crop_id or lot.crop_id
+    target_farm_id = payload.farm_id or lot.farm_id
+    if payload.asking_price_per_quintal is not None:
+        validate_target_price_bounds(db, target_crop_id, payload.asking_price_per_quintal, target_farm_id)
+
     if payload.demand_id and payload.demand_id != lot.demand_id:
+
         demand = db.query(BuyerDemand).filter(BuyerDemand.id == payload.demand_id).first()
         if not demand or demand.status != BuyerDemandStatus.ACTIVE:
             raise HTTPException(
@@ -295,11 +310,15 @@ def get_open_future_crop_lots_for_discovery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Marketplace discovery of OPEN Future Crop Lots."""
+    """Marketplace discovery of OPEN Future Crop Lots (Oilseeds only)."""
     query = (
         db.query(FutureCropLot)
         .join(Farm, FutureCropLot.farm_id == Farm.id)
-        .filter(FutureCropLot.status == FutureCropLotStatus.OPEN)
+        .join(Crop, FutureCropLot.crop_id == Crop.id)
+        .filter(
+            FutureCropLot.status == FutureCropLotStatus.OPEN,
+            Crop.is_oilseed == True
+        )
     )
 
     if crop_id:
@@ -308,4 +327,11 @@ def get_open_future_crop_lots_for_discovery(
         query = query.filter(Farm.district.ilike(f"%{district}%"))
 
     lots = query.order_by(FutureCropLot.created_at.desc()).all()
-    return [_enrich_marketplace_view(l) for l in lots]
+    seen_ids = set()
+    unique_lots = []
+    for l in lots:
+        if l.id not in seen_ids:
+            seen_ids.add(l.id)
+            unique_lots.append(l)
+
+    return [_enrich_marketplace_view(l) for l in unique_lots]

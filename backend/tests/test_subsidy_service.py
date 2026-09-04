@@ -27,7 +27,7 @@ def test_subsidy_fields_and_types(db: Session):
     required_keys = {
         "scheme_id", "scheme_name", "relevance", "eligibility_status",
         "eligibility_factors", "required_information", "support_information",
-        "verification_required", "data_source"
+        "verification_required", "official_url", "data_source"
     }
 
     for s in schemes:

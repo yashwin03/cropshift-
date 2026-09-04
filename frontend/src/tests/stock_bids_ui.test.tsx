@@ -115,7 +115,7 @@ describe('Phase 7C StockBid UI Integration', () => {
 
   it('1. Buyer sees Available Harvested Stock tab and Submit Stock Offer button', async () => {
     renderPageAsBuyer();
-    const stockTab = await screen.findByRole('button', { name: /Available Harvested Stock/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock|Available Harvested Stock/i });
     fireEvent.click(stockTab);
 
     expect(await screen.findByText('Submit Stock Offer')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('Phase 7C StockBid UI Integration', () => {
   it('2. Buyer can open Submit Stock Offer modal and submit offer', async () => {
     vi.mocked(stockBidService.createStockBid).mockResolvedValue(mockStockBid as any);
     renderPageAsBuyer();
-    const stockTab = await screen.findByRole('button', { name: /Available Harvested Stock/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock|Available Harvested Stock/i });
     fireEvent.click(stockTab);
 
     const offerBtn = await screen.findByText('Submit Stock Offer');
@@ -148,7 +148,7 @@ describe('Phase 7C StockBid UI Integration', () => {
 
   it('3. Buyer sees My Post-Harvest Stock Offers section', async () => {
     renderPageAsBuyer();
-    const bidsTab = await screen.findByRole('button', { name: /My Indicative Bids/i });
+    const bidsTab = await screen.findByRole('button', { name: /My Offers Sent|My Indicative Bids/i });
     fireEvent.click(bidsTab);
 
     expect(await screen.findByText(/My Post-Harvest Stock Offers/i)).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe('Phase 7C StockBid UI Integration', () => {
   it('4. Buyer can withdraw submitted stock offer', async () => {
     vi.mocked(stockBidService.withdrawStockBid).mockResolvedValue({ ...mockStockBid, status: 'WITHDRAWN' } as any);
     renderPageAsBuyer();
-    const bidsTab = await screen.findByRole('button', { name: /My Indicative Bids/i });
+    const bidsTab = await screen.findByRole('button', { name: /My Offers Sent|My Indicative Bids/i });
     fireEvent.click(bidsTab);
 
     const withdrawBtn = await screen.findByRole('button', { name: 'Withdraw Offer' });
@@ -171,7 +171,7 @@ describe('Phase 7C StockBid UI Integration', () => {
 
   it('5. Farmer sees incoming stock offers on harvested stock inventory', async () => {
     renderPageAsFarmer();
-    const stockTab = await screen.findByRole('button', { name: /Harvested Stock Inventory/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock/i });
     fireEvent.click(stockTab);
 
     expect(await screen.findByText(/Incoming Stock Offers/i)).toBeInTheDocument();
@@ -181,7 +181,7 @@ describe('Phase 7C StockBid UI Integration', () => {
   it('6. Farmer can open Accept Offer modal and allocate quantity', async () => {
     vi.mocked(stockBidService.acceptStockBid).mockResolvedValue({ ...mockStockBid, status: 'ACCEPTED', allocated_quantity_quintals: 40.0 } as any);
     renderPageAsFarmer();
-    const stockTab = await screen.findByRole('button', { name: /Harvested Stock Inventory/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock/i });
     fireEvent.click(stockTab);
 
     const acceptBtn = await screen.findByRole('button', { name: 'Accept Offer' });
@@ -203,7 +203,7 @@ describe('Phase 7C StockBid UI Integration', () => {
   it('7. Farmer can reject incoming stock offer', async () => {
     vi.mocked(stockBidService.rejectStockBid).mockResolvedValue({ ...mockStockBid, status: 'REJECTED' } as any);
     renderPageAsFarmer();
-    const stockTab = await screen.findByRole('button', { name: /Harvested Stock Inventory/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock/i });
     fireEvent.click(stockTab);
 
     const rejectBtn = await screen.findByRole('button', { name: 'Reject' });
@@ -217,7 +217,7 @@ describe('Phase 7C StockBid UI Integration', () => {
   it('8. Contact sharing card is rendered for accepted stock bids', async () => {
     vi.mocked(stockBidService.getFarmerStockLotBids).mockResolvedValue([{ ...mockStockBidFarmerView, status: 'ACCEPTED', allocated_quantity_quintals: 40.0 } as any]);
     renderPageAsFarmer();
-    const stockTab = await screen.findByRole('button', { name: /Harvested Stock Inventory/i });
+    const stockTab = await screen.findByRole('button', { name: /Harvest.*Stock/i });
     fireEvent.click(stockTab);
 
     expect(await screen.findByText(/Mutual Contact Sharing/i)).toBeInTheDocument();

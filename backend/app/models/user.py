@@ -19,6 +19,9 @@ class User(Base):
     phone = Column(String, nullable=True)
     farmer_id = Column(String, nullable=True, unique=True, index=True)
     partner_code = Column(String, nullable=True, unique=True, index=True)
+    gst_number = Column(String, nullable=True)
+    gst_status = Column(String, nullable=True, default="Verification Pending")
     is_active = Column(Boolean, default=True)
 
     farms = relationship("Farm", back_populates="owner")
+    cultivation_records = relationship("CropCultivationRecord", back_populates="farmer", cascade="all, delete-orphan")

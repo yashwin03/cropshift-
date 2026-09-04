@@ -8,6 +8,7 @@ import SafetyScoreGauge from '../components/score/SafetyScoreGauge';
 import ScoreBreakdown from '../components/score/ScoreBreakdown';
 import PeerProofCard from '../components/recommendation/PeerProofCard';
 import PlanCropModal from '../components/farmer/PlanCropModal';
+import AddCropModal from '../components/farmer/AddCropModal';
 import { getRecommendation, getFarmDetails } from '../utils/storage';
 import type { TopOilseedItem } from '../types/api';
 import FarmPlot3D from '../components/3d/FarmPlot3D';
@@ -24,6 +25,7 @@ import {
   IconArrowRight,
   IconTrendingUp,
   IconSparkles,
+  IconPlus,
 } from '../components/common/Icons';
 
 function formatINR(amount: number): string {
@@ -50,19 +52,17 @@ function ComponentProgressBar({ label, score, colorClass = 'bg-emerald-500' }: {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-black text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5 mb-2">
       {children}
-    </h2>
+    </h3>
   );
 }
 
 function CheckItem({ text }: { text: string }) {
   return (
-    <li className="flex items-start gap-2 py-2 border-b border-slate-800/80 last:border-0 text-xs">
-      <span className="flex-shrink-0 w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[10px] font-black mt-0.5">
-        <IconCheck size={10} />
-      </span>
-      <span className="text-slate-200 font-medium leading-relaxed">{text}</span>
+    <li className="flex items-start gap-2 text-xs text-slate-300 py-1">
+      <span className="text-emerald-400 font-bold mt-0.5">&bull;</span>
+      <span>{text}</span>
     </li>
   );
 }
@@ -91,6 +91,7 @@ export default function RecommendationPage() {
   const recommendation = getRecommendation();
   const farm = getFarmDetails();
   const [isPlanModalOpen, setIsPlanModalOpen] = React.useState(false);
+  const [isAddCropModalOpen, setIsAddCropModalOpen] = React.useState(false);
 
   if (!recommendation) {
     return (
@@ -182,12 +183,23 @@ export default function RecommendationPage() {
           <DecisionBadge decision={decision} size="md" />
         </div>
 
-        <div>
-          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Recommended Oilseed</span>
-          <h2 data-testid="recommended-crop" className="text-3xl sm:text-4xl font-black text-white tracking-tight mt-0.5">
-            {recommended_crop}
-          </h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Recommended Oilseed</span>
+            <h2 data-testid="recommended-crop" className="text-3xl sm:text-4xl font-black text-white tracking-tight mt-0.5">
+              {recommended_crop}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAddCropModalOpen(true)}
+            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+          >
+            <IconPlus size={16} />
+            <span>+ Add to My Crops</span>
+          </button>
         </div>
+
 
         {/* Safety Score Gauge container for testid */}
         <div data-testid="safety-score" className="flex flex-col items-center text-center">
@@ -389,6 +401,14 @@ export default function RecommendationPage() {
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
       />
+      <AddCropModal
+        isOpen={isAddCropModalOpen}
+        onClose={() => setIsAddCropModalOpen(false)}
+        initialCropName={recommended_crop}
+        initialStage="GROWING"
+        initialYield={24.5}
+      />
     </div>
   );
 }
+

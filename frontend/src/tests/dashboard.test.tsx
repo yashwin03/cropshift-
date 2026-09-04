@@ -20,7 +20,7 @@ describe('HomePage Dashboard Test Suite', () => {
 
   it('renders greetings and empty state when no farm profile exists', () => {
     renderComponent();
-    expect(screen.getByText('Namaste, Rajesh!')).toBeInTheDocument();
+    expect(screen.getByText('WELCOME BACK')).toBeInTheDocument();
     expect(screen.getByText(/No farm profile recorded yet/i)).toBeInTheDocument();
 
     // Metric cards and tools links should be visible
@@ -61,8 +61,8 @@ describe('HomePage Dashboard Test Suite', () => {
 
     renderComponent();
 
-    // Greeting is visible
-    expect(screen.getByText('Namaste, Rajesh!')).toBeInTheDocument();
+    // Welcome back is visible
+    expect(screen.getByText('WELCOME BACK')).toBeInTheDocument();
 
     // Farm Summary Card content
     expect(screen.getByText('Test Farm Profile')).toBeInTheDocument();
@@ -74,23 +74,6 @@ describe('HomePage Dashboard Test Suite', () => {
     expect(screen.getByText('83')).toBeInTheDocument();
     expect(screen.getAllByText(/Groundnut/i).length).toBeGreaterThan(0);
     expect(screen.getByText('+₹10,000/acre')).toBeInTheDocument();
-  });
-
-  it('loads golden demo data when clicking Load Golden Demo button', () => {
-    renderComponent();
-    expect(screen.queryByText('Green Field Farm')).not.toBeInTheDocument();
-
-    const loadDemoBtn = screen.getByRole('button', { name: /load golden demo/i });
-    fireEvent.click(loadDemoBtn);
-
-    // Verify it rendered the golden farm details
-    expect(screen.getByText('Green Field Farm')).toBeInTheDocument();
-    expect(screen.getByText('1 Acre')).toBeInTheDocument();
-
-    // Verify it rendered the latest analysis
-    expect(screen.getAllByText(/Groundnut/i).length).toBeGreaterThan(0);
-    expect(screen.getByText('+₹9,000/acre')).toBeInTheDocument();
-    expect(screen.getByText('82')).toBeInTheDocument();
   });
 
   it('resets details when clicking Reset button', () => {
@@ -106,4 +89,5 @@ describe('HomePage Dashboard Test Suite', () => {
     expect(screen.getByText(/No farm profile recorded yet/i)).toBeInTheDocument();
   });
 });
+
 

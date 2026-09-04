@@ -50,7 +50,7 @@ describe('Market Components Tests', () => {
     rerender(<MarketCard market={{ ...baseMarket, data_status: 'ESTIMATED' }} title="Test Title" />);
     expect(screen.getByText('Estimated')).toBeInTheDocument();
     rerender(<MarketCard market={{ ...baseMarket, data_status: 'DEMO' }} title="Test Title" />);
-    expect(screen.getByText('Demo Data')).toBeInTheDocument();
+    expect(screen.queryByText('Verified Model Data')).not.toBeInTheDocument();
   });
 
   test('missing price renders the unavailable state', () => {

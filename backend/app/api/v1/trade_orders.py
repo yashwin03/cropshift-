@@ -21,24 +21,45 @@ logger = logging.getLogger(__name__)
 
 def _build_trade_order_response(order: TradeOrder, db: Session) -> TradeOrderResponse:
     stock_lot = order.stock_lot
-    crop_name = stock_lot.crop.name if (stock_lot and stock_lot.crop) else None
-    district = stock_lot.farm.district if (stock_lot and stock_lot.farm) else None
-    state = stock_lot.farm.state if (stock_lot and stock_lot.farm) else None
+    future_lot = order.future_crop_lot
+    
+    crop_name = None
+    district = None
+    state = None
+    
+    if stock_lot:
+        crop_name = stock_lot.crop.name if stock_lot.crop else None
+        district = stock_lot.farm.district if stock_lot.farm else None
+        state = stock_lot.farm.state if stock_lot.farm else None
+    elif future_lot:
+        crop_name = future_lot.crop.name if future_lot.crop else None
+        district = future_lot.farm.district if future_lot.farm else None
+        state = future_lot.farm.state if future_lot.farm else None
 
     buyer_display_id = f"Buyer #{order.buyer_id}"
-    if order.buyer and order.buyer.full_name:
-        buyer_display_id = order.buyer.full_name
+    if order.buyer and (order.buyer.full_name or order.buyer.username):
+        buyer_display_id = order.buyer.full_name or order.buyer.username
 
     farmer_display_id = f"Farmer #{order.farmer_id}"
-    if order.farmer and order.farmer.full_name:
-        farmer_display_id = order.farmer.full_name
+    if order.farmer and (order.farmer.full_name or order.farmer.username):
+        farmer_display_id = order.farmer.full_name or order.farmer.username
 
     contact_sharing_status = "NOT_CREATED"
-    sharing = (
-        db.query(ContactSharing)
-        .filter(ContactSharing.stock_bid_id == order.stock_bid_id)
-        .first()
-    )
+    if order.stock_bid_id:
+        sharing = (
+            db.query(ContactSharing)
+            .filter(ContactSharing.stock_bid_id == order.stock_bid_id)
+            .first()
+        )
+    elif order.bid_id:
+        sharing = (
+            db.query(ContactSharing)
+            .filter(ContactSharing.bid_id == order.bid_id)
+            .first()
+        )
+    else:
+        sharing = None
+
     if sharing:
         contact_sharing_status = sharing.status.value
 
@@ -46,6 +67,8 @@ def _build_trade_order_response(order: TradeOrder, db: Session) -> TradeOrderRes
         id=order.id,
         stock_bid_id=order.stock_bid_id,
         stock_lot_id=order.stock_lot_id,
+        bid_id=order.bid_id,
+        future_crop_lot_id=order.future_crop_lot_id,
         buyer_id=order.buyer_id,
         farmer_id=order.farmer_id,
         allocated_quantity_quintals=order.allocated_quantity_quintals,

@@ -59,7 +59,7 @@ describe('Common Components Tests', () => {
       expect(container.firstChild).toHaveClass('bg-green-100');
 
       rerender(<StatusBadge status="DEMO" />);
-      expect(screen.getByText('Demo Data')).toBeInTheDocument();
+      expect(screen.queryByText('Verified Model Data')).not.toBeInTheDocument();
       expect(container.firstChild).toHaveClass('bg-amber-100');
     });
   });

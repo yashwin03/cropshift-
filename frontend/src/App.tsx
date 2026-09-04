@@ -37,6 +37,14 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="/farm-info"
+                  element={
+                    <ProtectedRoute allowedRoles={['FARMER']}>
+                      <FarmInfoPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/analyze"
                   element={
                     <ProtectedRoute allowedRoles={['FARMER']}>

@@ -26,6 +26,7 @@ class FutureCropLot(Base):
     crop_id = Column(Integer, ForeignKey("crop.id"), nullable=False, index=True)
     demand_id = Column(Integer, ForeignKey("buyer_demand.id"), nullable=True, index=True)
     recommendation_id = Column(Integer, ForeignKey("recommendation.id"), nullable=True, index=True)
+    cultivation_record_id = Column(Integer, ForeignKey("crop_cultivation_record.id"), nullable=True, index=True)
 
     variety = Column(String, nullable=True)
     planned_acres = Column(Float, nullable=False)
@@ -46,3 +47,4 @@ class FutureCropLot(Base):
     crop = relationship("Crop")
     demand = relationship("BuyerDemand")
     recommendation = relationship("Recommendation")
+    cultivation_record = relationship("CropCultivationRecord", back_populates="future_crop_lots")

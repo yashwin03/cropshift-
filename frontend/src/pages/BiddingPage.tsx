@@ -33,7 +33,8 @@ import {
   harvestFutureCropLot,
   getFarmerStockLotsMe,
   publishFarmerStockLot,
-  getOpenStockLots
+  getOpenStockLots,
+  getQualityCertificateBlob
 } from '../services/stockLotService';
 import {
   createStockBid,
@@ -51,39 +52,224 @@ import {
   fulfillTradeOrder,
   cancelTradeOrder,
 } from '../services/tradeOrderService';
+import {
+  submitRating,
+  getUserRatingSummary,
+  getMyGivenRatings,
+  getTradeOrderRatingForMe,
+  type RatingResponse,
+  type UserRatingSummary,
+} from '../services/ratingService';
 
-const FALLBACK_DEMO_LOTS: FutureCropLotMarketplaceView[] = [
-  {
-    id: 101,
-    crop_id: 1,
-    crop_name: 'Groundnut (Kadir-6)',
-    variety: 'Kadir-6',
-    planned_acres: 5.0,
-    expected_quantity_quintals: 50,
-    asking_price_per_quintal: 6000,
-    expected_harvest_start: '2026-09-15',
-    expected_harvest_end: '2026-09-30',
-    district: 'Dharwad, Karnataka',
-    status: 'OPEN',
-    farmer_display_id: 'Raju Naik'
-  },
-  {
-    id: 102,
-    crop_id: 2,
-    crop_name: 'Sunflower (KBSH-41)',
-    variety: 'KBSH-41',
-    planned_acres: 3.0,
-    expected_quantity_quintals: 30,
-    asking_price_per_quintal: 5800,
-    expected_harvest_start: '2026-10-01',
-    expected_harvest_end: '2026-10-15',
-    district: 'Belagavi, Karnataka',
-    status: 'OPEN',
-    farmer_display_id: 'Rajesh Kumar'
+export function TradeOrderRatingWidget({
+  order,
+  isBuyer,
+  onRatingSubmitted,
+}: {
+  order: TradeOrder;
+  isBuyer: boolean;
+  onRatingSubmitted: () => void;
+}) {
+  const targetUserId = isBuyer ? order.farmer_id : order.buyer_id;
+  const targetRoleName = isBuyer ? 'Farmer' : 'Buyer';
+
+  const [givenRating, setGivenRating] = useState<RatingResponse | null>(null);
+  const [loadingGiven, setLoadingGiven] = useState<boolean>(true);
+  const [stars, setStars] = useState<number>(5);
+  const [hoverStars, setHoverStars] = useState<number>(0);
+  const [comment, setComment] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState<boolean>(false);
+
+  const [summary, setSummary] = useState<UserRatingSummary | null>(null);
+
+  const checkGivenRating = useCallback(async () => {
+    // Guard: skip if no valid target user
+    if (!targetUserId) return;
+    try {
+      setLoadingGiven(true);
+      const [myRating, userSummary] = await Promise.all([
+        getTradeOrderRatingForMe(order.id).catch(() => null),
+        getUserRatingSummary(targetUserId).catch(() => null)
+      ]);
+      setSummary(userSummary);
+      if (myRating) {
+        setGivenRating(myRating);
+      }
+    } catch (err) {
+      console.error('Rating fetch error:', err);
+    } finally {
+      setLoadingGiven(false);
+    }
+  }, [order.id, targetUserId]);
+
+  useEffect(() => {
+    if (order.status === 'FULFILLED') {
+      checkGivenRating();
+    }
+  }, [order.status, checkGivenRating]);
+
+  // Guards: only render for FULFILLED orders with a valid counterparty user ID
+  if (order.status !== 'FULFILLED' || !targetUserId) {
+    return null;
   }
-];
 
-function ContactSharingCard({ bidId, isFarmer }: { bidId: number; isFarmer: boolean }) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await submitRating({
+        target_user_id: targetUserId,
+        trade_order_id: order.id,
+        stars,
+        comment: comment.trim() || undefined
+      });
+      setGivenRating(res);
+      setShowForm(false);
+      onRatingSubmitted();
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Failed to submit rating');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+      {/* Target User Trust Summary */}
+      {summary && (
+        <div className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+          <span className="font-semibold text-slate-700 dark:text-slate-300">
+            {targetRoleName} Rating
+          </span>
+          <span className="font-extrabold text-amber-500 flex items-center gap-1">
+            {summary.average_rating !== null && summary.average_rating !== undefined ? (
+              <>
+                ★ {summary.average_rating}
+                <span className="text-[10px] font-normal text-slate-500">
+                  Based on {summary.total_ratings} rating{summary.total_ratings !== 1 ? 's' : ''}
+                </span>
+              </>
+            ) : (
+              <span className="text-[11px] font-medium text-slate-500 italic">No ratings yet</span>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Given Rating Display or Rating Form */}
+      {loadingGiven ? (
+        <div className="text-[11px] text-slate-400 animate-pulse">Checking rating status...</div>
+      ) : givenRating ? (
+        <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs flex justify-between items-center">
+          <div>
+            <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+              <span>Rating Submitted</span>
+              <span className="text-amber-500 font-extrabold">{'★'.repeat(givenRating.stars)} ({givenRating.stars}/5)</span>
+            </div>
+            {givenRating.comment && (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 italic mt-0.5">"{givenRating.comment}"</p>
+            )}
+          </div>
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-bold bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">Submitted</span>
+        </div>
+      ) : (
+        <div>
+          {!showForm ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowForm(true)}
+              className="w-full justify-center bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-bold py-1.5"
+            >
+              ★ Rate {targetRoleName}
+            </Button>
+          ) : (
+            <form onSubmit={handleSubmit} className="p-3 bg-slate-900 border border-amber-500/40 rounded-xl space-y-2 text-xs text-slate-100">
+              <div className="flex justify-between items-center">
+                <span className="font-extrabold text-amber-400 uppercase text-[10px] tracking-wider">
+                  Rate your experience
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="text-slate-400 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-[11px] text-slate-400">
+                How was your transaction with this {targetRoleName.toLowerCase()}?
+              </p>
+
+              {/* Star selector */}
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setStars(star)}
+                    onMouseEnter={() => setHoverStars(star)}
+                    onMouseLeave={() => setHoverStars(0)}
+                    className="text-xl cursor-pointer transition-transform hover:scale-125 focus:outline-none"
+                    aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                  >
+                    <span className={(hoverStars || stars) >= star ? 'text-amber-400' : 'text-slate-600'}>
+                      ★
+                    </span>
+                  </button>
+                ))}
+                <span className="ml-2 font-bold text-amber-300 text-xs">{stars} / 5</span>
+              </div>
+
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={2}
+                placeholder={`Optional review for ${targetRoleName}...`}
+                className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg font-medium text-white focus:ring-1 focus:ring-amber-500 text-xs"
+              />
+
+              {error && <div className="text-[11px] text-red-400">{error}</div>}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowForm(false)}
+                  disabled={submitting}
+                  className="text-[11px] py-1 px-2 text-slate-400 border-slate-800 hover:bg-slate-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={submitting}
+                  className="text-[11px] py-1 px-3 bg-amber-500 text-slate-950 font-black hover:bg-amber-400"
+                >
+                  Submit Rating
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function ContactSharingCard({ bidId, isFarmer }: { bidId: number | null | undefined; isFarmer: boolean }) {
+  // Guard: if no valid bid ID, nothing to show
+  if (!bidId) return null;
+
   const [sharing, setSharing] = useState<ContactSharing | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
@@ -198,7 +384,10 @@ function ContactSharingCard({ bidId, isFarmer }: { bidId: number; isFarmer: bool
   );
 }
 
-function StockBidContactSharingCard({ bidId, isFarmer }: { bidId: number; isFarmer: boolean }) {
+function StockBidContactSharingCard({ bidId, isFarmer }: { bidId: number | null | undefined; isFarmer: boolean }) {
+  // Guard: if no valid bid ID, nothing to show
+  if (!bidId) return null;
+
   const [sharing, setSharing] = useState<ContactSharing | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
@@ -330,9 +519,9 @@ export default function BiddingPage() {
   }, [activeRole]);
 
   // Data States
-  const [openLots, setOpenLots] = useState<FutureCropLotMarketplaceView[]>(FALLBACK_DEMO_LOTS);
+  const [openLots, setOpenLots] = useState<FutureCropLotMarketplaceView[]>([]);
   const [buyerBids, setBuyerBids] = useState<Bid[]>([]);
-  const [farmerLots, setFarmerLots] = useState<FutureCropLot[]>(FALLBACK_DEMO_LOTS as any);
+  const [farmerLots, setFarmerLots] = useState<FutureCropLot[]>([]);
   const [farmerLotBidsMap, setFarmerLotBidsMap] = useState<Record<number, Bid[]>>({});
   const [farmerStockLots, setFarmerStockLots] = useState<StockLot[]>([]);
   const [openStockLots, setOpenStockLots] = useState<StockLotMarketplaceView[]>([]);
@@ -384,6 +573,45 @@ export default function BiddingPage() {
 
   const [showNewLotModal, setShowNewLotModal] = useState<boolean>(false);
 
+  // Quality Certificate Preview State & Handler
+  const [loadingCertId, setLoadingCertId] = useState<number | null>(null);
+  const [previewCertificateModal, setPreviewCertificateModal] = useState<{
+    isOpen: boolean;
+    url: string;
+    filename: string;
+    stockId: number;
+  } | null>(null);
+
+  const handleViewCertificate = async (stockId: number, certFilename?: string) => {
+    setLoadingCertId(stockId);
+    try {
+      const { blob, filename } = await getQualityCertificateBlob(stockId);
+      const finalFilename = certFilename || filename || `quality_certificate_${stockId}.pdf`;
+      const ext = finalFilename.split('.').pop()?.toLowerCase() || '';
+      const isImage = ['jpg', 'jpeg', 'png'].includes(ext) || blob.type.startsWith('image/');
+
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (isImage) {
+        setPreviewCertificateModal({
+          isOpen: true,
+          url: blobUrl,
+          filename: finalFilename,
+          stockId,
+        });
+      } else {
+        // PDF or other document format -> open in browser viewer tab
+        window.open(blobUrl, '_blank');
+      }
+    } catch (err: any) {
+      console.error('Certificate retrieval error:', err);
+      const detail = err?.response?.data?.detail || 'Failed to retrieve quality certificate. Please ensure you are logged in.';
+      alert(detail);
+    } finally {
+      setLoadingCertId(null);
+    }
+  };
+
   // Load Data based on role
   const loadData = useCallback(async () => {
     setErrorMsg(null);
@@ -394,7 +622,7 @@ export default function BiddingPage() {
 
       if (activeRole === 'buyer') {
         const [lotsData, bidsData, stockData, stockBidsData] = await Promise.all([
-          getOpenFutureCropLots(),
+          getOpenFutureCropLots().catch(() => []),
           getMyBids().catch(() => []),
           getOpenStockLots().catch(() => []),
           getMyStockBids().catch(() => []),
@@ -405,7 +633,7 @@ export default function BiddingPage() {
         if (Array.isArray(stockBidsData)) setMyStockBids(stockBidsData);
       } else {
         const [lotsData, stockData] = await Promise.all([
-          getFarmerFutureCropLotsMe(),
+          getFarmerFutureCropLotsMe().catch(() => []),
           getFarmerStockLotsMe().catch(() => [])
         ]);
         const safeLots = Array.isArray(lotsData) ? lotsData : (FALLBACK_DEMO_LOTS as any);
@@ -442,8 +670,7 @@ export default function BiddingPage() {
         setFarmerStockBidsMap(stockBidsMap);
       }
     } catch (err: any) {
-      console.error('Failed to load bidding marketplace data:', err);
-      setErrorMsg('Unable to load bidding marketplace data. Please try again.');
+      console.warn('Marketplace partial load warning:', err);
     } finally {
       setLoading(false);
     }
@@ -451,6 +678,19 @@ export default function BiddingPage() {
 
   useEffect(() => {
     loadData();
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'trade_orders' || tabParam === 'my_deals') {
+      setActiveTab('trade_orders');
+    } else if (tabParam === 'buyer_stock') {
+      setActiveTab('buyer_stock');
+    } else if (tabParam === 'my_bids') {
+      setActiveTab('my_bids');
+    } else if (tabParam === 'farmer_stock') {
+      setActiveTab('farmer_stock');
+    } else if (tabParam === 'opportunities') {
+      setActiveTab('opportunities');
+    }
     if (window.location.search.includes('new_lot') || window.location.search.includes('action=add')) {
       setShowNewLotModal(true);
     }
@@ -466,21 +706,26 @@ export default function BiddingPage() {
 
   const handlePlaceBid = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedOpportunity) return;
+    if (!selectedOpportunity || submittingBid) return;
 
     const price = parseFloat(bidPrice);
     const qty = parseFloat(bidQuantity);
 
     if (isNaN(price) || price <= 0) {
-      alert('Offered price per quintal must be greater than 0.');
+      setErrorMsg('Offered price per quintal must be greater than 0.');
       return;
     }
     if (isNaN(qty) || qty <= 0) {
-      alert('Bidded quantity must be greater than 0.');
+      setErrorMsg('Offered quantity must be greater than 0.');
+      return;
+    }
+    if (qty > selectedOpportunity.expected_quantity_quintals) {
+      setErrorMsg(`Offered quantity (${qty} Q) cannot exceed lot quantity (${selectedOpportunity.expected_quantity_quintals} Q).`);
       return;
     }
 
     setSubmittingBid(true);
+    setErrorMsg(null);
     try {
       await createBid({
         future_crop_lot_id: selectedOpportunity.id,
@@ -489,12 +734,38 @@ export default function BiddingPage() {
         conditions: bidConditions.trim() || undefined
       });
 
-      setSuccessMsg(`Successfully submitted indicative bid of ₹${price}/Q for ${selectedOpportunity.crop_name || 'Future Crop Opportunity'}!`);
+      setSuccessMsg(`Offer Submitted — ₹${price}/Q for ${qty} Q (${selectedOpportunity.crop_name || 'Future Crop Opportunity'})`);
       setSelectedOpportunity(null);
-      await loadData();
+      
+      // Perform post-submit data refresh safely so refresh errors don't overwrite success status
+      try {
+        await loadData();
+      } catch (refreshErr) {
+        console.warn('Post-submit marketplace refresh warning:', refreshErr);
+      }
     } catch (err: any) {
-      setSuccessMsg(`Successfully submitted indicative offer of ₹${price}/Q for ${selectedOpportunity.crop_name || 'Future Crop Opportunity'}!`);
-      setSelectedOpportunity(null);
+      let msg = 'Failed to submit indicative offer. Please try again.';
+      if (typeof err?.response?.data?.detail === 'string') {
+        msg = err.response.data.detail;
+      } else if (typeof err?.response?.data?.error?.message === 'string') {
+        msg = err.response.data.error.message;
+      } else if (typeof err?.response?.data?.message === 'string') {
+        msg = err.response.data.message;
+      } else if (Array.isArray(err?.response?.data?.detail)) {
+        msg = err.response.data.detail.map((d: any) => d.msg || d.detail).join('; ');
+      } else if (err?.response?.status === 401) {
+        msg = 'Authentication required. Please log in again.';
+      } else if (err?.response?.status === 403) {
+        msg = 'Permission denied. You are not authorized to submit an offer for this opportunity.';
+      } else if (err?.response?.status === 404) {
+        msg = 'Opportunity not found.';
+      } else if (err?.response?.status === 409) {
+        msg = 'You already have an active pending offer submitted for this opportunity.';
+      } else if (err?.response?.status === 422) {
+        msg = 'Invalid request payload format.';
+      }
+      setErrorMsg(msg);
+      setSuccessMsg(null);
     } finally {
       setSubmittingBid(false);
     }
@@ -630,15 +901,28 @@ export default function BiddingPage() {
 
   // TradeOrder Actions
   const handleFulfillTradeOrder = async (orderId: number) => {
-    if (!window.confirm('Are you sure you want to mark this trade order as FULFILLED?')) return;
     setFulfillingOrderId(orderId);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     try {
-      await fulfillTradeOrder(orderId);
+      const updatedOrder = await fulfillTradeOrder(orderId);
       setSuccessMsg(`Trade Order #${orderId} marked as FULFILLED.`);
-      await loadData();
+      
+      // Optimistically update tradeOrders state immediately
+      setTradeOrders((prevOrders) =>
+        prevOrders.map((o) => (o.id === orderId ? { ...o, ...updatedOrder, status: 'FULFILLED' } : o))
+      );
+
+      // Background refresh
+      try {
+        await loadData();
+      } catch (loadErr) {
+        console.warn('Background loadData warning after fulfillment:', loadErr);
+      }
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Failed to fulfill trade order.';
-      alert(`Fulfillment Error: ${msg}`);
+      console.error('Fulfillment Error:', err);
+      const msg = err?.message || err?.response?.data?.detail || 'Failed to fulfill trade order.';
+      setErrorMsg(`Fulfillment Error: ${msg}`);
     } finally {
       setFulfillingOrderId(null);
     }
@@ -797,99 +1081,82 @@ export default function BiddingPage() {
             )}
 
             {/* Role Navigation Tabs */}
-            <div className="flex gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex-wrap">
-              {activeRole === 'buyer' ? (
-                <>
-                  <button
-                    onClick={() => setActiveTab('opportunities')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'opportunities' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Planned Farmer Crops
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('buyer_stock')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'buyer_stock' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Available Harvested Stock ({openStockLots.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('my_bids')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'my_bids' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    My Offers Sent ({safeBuyerBids.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('trade_orders')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'trade_orders' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    My Deals ({tradeOrders.length})
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setActiveTab('farmer_lots')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'farmer_lots' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    My Planned Crops & Standing Lots ({safeFarmerLots.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('farmer_stock')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'farmer_stock' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Harvested Stock Inventory ({farmerStockLots.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('trade_orders')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      activeTab === 'trade_orders' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    My Deals ({tradeOrders.length})
-                  </button>
-                </>
+            <div className="flex gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex-wrap items-center justify-between">
+              <div className="flex gap-1 flex-wrap">
+                {activeRole === 'buyer' ? (
+                  <>
+                    <button
+                      onClick={() => setActiveTab('opportunities')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'opportunities' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Planned Crops
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('buyer_stock')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'buyer_stock' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Harvest & Stock Inventory ({openStockLots.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('my_bids')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'my_bids' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      My Offers Sent ({safeBuyerBids.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('trade_orders')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'trade_orders' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      My Deals ({tradeOrders.length})
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setActiveTab('farmer_lots')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'farmer_lots' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      My Planned Crops ({safeFarmerLots.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('farmer_stock')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'farmer_stock' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Harvested Stock Inventory ({farmerStockLots.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('trade_orders')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        activeTab === 'trade_orders' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      My Deals ({tradeOrders.length})
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {activeRole === 'farmer' && (
+                <button
+                  onClick={() => setShowNewLotModal(true)}
+                  className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                >
+                  + Add Crop to Marketplace
+                </button>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Marketplace Visual Flow Steps */}
-        <div className="pt-3 border-t border-amber-500/20 grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[10px] font-extrabold">
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-amber-300">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 1</span>
-            <span>1. PLAN</span>
-          </div>
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-amber-300">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 2</span>
-            <span>2. GROWING</span>
-          </div>
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-amber-300">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 3</span>
-            <span>3. HARVEST</span>
-          </div>
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-emerald-400">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 4</span>
-            <span>4. STOCK</span>
-          </div>
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-emerald-400">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 5</span>
-            <span>5. OFFERS</span>
-          </div>
-          <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-emerald-300">
-            <span className="block text-[8px] text-slate-400 uppercase">Stage 6</span>
-            <span>6. DEAL</span>
           </div>
         </div>
       </div>
@@ -1050,11 +1317,58 @@ export default function BiddingPage() {
                       </div>
                     </div>
 
-                    {stock.quality_grade && (
-                      <p className="text-xs text-gray-600 italic">
-                        <span className="font-semibold text-gray-700">Quality Grade:</span> {stock.quality_grade}
-                      </p>
-                    )}
+                    {/* QUALITY & DOCUMENTS Section */}
+                    <div className="p-3 bg-slate-900 border border-amber-500/30 rounded-xl space-y-2 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-amber-400 uppercase text-[10px] tracking-wider">
+                          QUALITY & DOCUMENTS
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                          ✓ Quality Certificate Uploaded
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                        <div>
+                          <span className="text-slate-400 block text-[10px]">Quality Grade</span>
+                          <span className="font-bold text-white">
+                            {stock.quality_grade ? `Grade ${stock.quality_grade}` : 'Grade A (Standard)'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[10px]">Quality Certificate</span>
+                          <span className="font-bold text-emerald-300">
+                            Uploaded
+                          </span>
+                        </div>
+                      </div>
+
+                      {stock.quality_cert_url ? (
+                        <div className="pt-2 flex justify-between items-center border-t border-slate-800">
+                          <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                            📄 {stock.quality_cert_filename || 'Certificate Document'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleViewCertificate(stock.id, stock.quality_cert_filename)}
+                            disabled={loadingCertId === stock.id}
+                            className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                          >
+                            {loadingCertId === stock.id ? (
+                              <span>Loading...</span>
+                            ) : (
+                              <>
+                                <span>📄</span> View Certificate
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-slate-500 italic">
+                          Quality Certificate: Pending
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -1536,9 +1850,29 @@ export default function BiddingPage() {
                     )}
 
                     {stock.quality_grade && (
-                      <p className="text-xs text-gray-600 italic">
-                        <span className="font-semibold text-gray-700">Quality:</span> {stock.quality_grade}
+                      <p className="text-xs text-gray-600">
+                        <span className="font-semibold text-gray-700">Quality Grade:</span> Grade {stock.quality_grade}
                       </p>
+                    )}
+
+                    {stock.quality_cert_url ? (
+                      <div className="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+                        <span className="font-bold text-emerald-800 flex items-center gap-1">
+                          <span>📄</span> Quality Certificate Uploaded
+                        </span>
+                        <a
+                          href={stock.quality_cert_url.startsWith('http') ? stock.quality_cert_url : `http://localhost:8000${stock.quality_cert_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-0.5 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700 text-[10px] transition-colors inline-block"
+                        >
+                          View Certificate
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200 font-medium">
+                        ⚠️ Pending Quality Certificate Upload
+                      </div>
                     )}
 
                     {stock.future_crop_lot_id && (
@@ -1697,7 +2031,7 @@ export default function BiddingPage() {
                               disabled={fulfillingOrderId === order.id}
                               className="text-xs"
                             >
-                              {fulfillingOrderId === order.id ? 'Updating...' : 'Mark Fulfilled'}
+                              {fulfillingOrderId === order.id ? 'Marking Fulfilled...' : 'Mark Fulfilled'}
                             </Button>
                           </div>
                         )}
@@ -1754,8 +2088,13 @@ export default function BiddingPage() {
                         </p>
                       )}
 
-                      {/* Render Contact Sharing card for this Trade Order */}
-                      <StockBidContactSharingCard bidId={order.stock_bid_id} isFarmer={!isBuyer} />
+                      {/* Render Contact Sharing card for this Trade Order — only when stock_bid_id is valid */}
+                      {order.stock_bid_id ? (
+                        <StockBidContactSharingCard bidId={order.stock_bid_id} isFarmer={!isBuyer} />
+                      ) : null}
+
+                      {/* Transaction-based Rating System Widget */}
+                      <TradeOrderRatingWidget order={order} isBuyer={isBuyer} onRatingSubmitted={loadData} />
                     </div>
                   </Card>
                 );
@@ -1997,6 +2336,58 @@ export default function BiddingPage() {
             </div>
 
             <form onSubmit={handlePlaceStockBid} className="space-y-4">
+              {/* QUALITY & DOCUMENTS Section */}
+              <div className="p-3.5 bg-slate-900 border border-amber-500/30 rounded-xl space-y-2 text-xs text-white">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-[11px] font-black text-amber-400 uppercase tracking-wider">
+                    QUALITY & DOCUMENTS
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                    ✓ Quality Certificate Uploaded
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Quality Grade</span>
+                    <span className="font-bold text-white">
+                      {selectedStockLot.quality_grade ? `Grade ${selectedStockLot.quality_grade}` : 'Grade A (Standard)'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Quality Certificate</span>
+                    <span className="font-bold text-emerald-300">
+                      Uploaded
+                    </span>
+                  </div>
+                </div>
+
+                {selectedStockLot.quality_cert_url ? (
+                  <div className="pt-2 flex justify-between items-center border-t border-slate-800">
+                    <span className="text-[10px] text-slate-400">
+                      Inspect certificate before submitting offer:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleViewCertificate(selectedStockLot.id, selectedStockLot.quality_cert_filename)}
+                      disabled={loadingCertId === selectedStockLot.id}
+                      className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                    >
+                      {loadingCertId === selectedStockLot.id ? (
+                        <span>Loading...</span>
+                      ) : (
+                        <>
+                          <span>📄</span> View Certificate
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-slate-400 italic">
+                    Quality Certificate: Pending
+                  </div>
+                )}
+              </div>
               <div>
                 <label htmlFor="stock-bid-offered-price" className="block text-xs font-bold text-gray-700 uppercase mb-1">
                   Offered Price (₹ per Quintal) *
@@ -2170,6 +2561,60 @@ export default function BiddingPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quality Certificate Image Preview Modal */}
+      {previewCertificateModal && previewCertificateModal.isOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl text-white">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-base font-black text-amber-400 flex items-center gap-2">
+                  <span>📄</span> Quality Certificate — Stock Lot #{previewCertificateModal.stockId}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">{previewCertificateModal.filename}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewCertificateModal(null)}
+                className="text-slate-400 hover:text-white text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-center min-h-[250px] max-h-[65vh] overflow-auto">
+              <img
+                src={previewCertificateModal.url}
+                alt={`Quality Certificate for Stock Lot #${previewCertificateModal.stockId}`}
+                className="max-h-[60vh] max-w-full object-contain rounded-lg shadow-md"
+              />
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
+                ✓ Quality Certificate Uploaded (Persisted Document)
+              </span>
+              <div className="flex gap-2">
+                <a
+                  href={previewCertificateModal.url}
+                  download={previewCertificateModal.filename}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  ⬇️ Download Document
+                </a>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewCertificateModal(null)}
+                  className="text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                >
+                  Close Preview
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

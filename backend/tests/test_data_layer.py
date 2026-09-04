@@ -144,7 +144,7 @@ class TestGetFarm:
         assert farm["id"] == 1
 
     def test_missing_farm_returns_none(self, db):
-        assert get_farm(db, 9999) is None
+        assert get_farm(db, 999999) is None
 
     def test_farm_has_required_keys(self, db):
         farm = get_farm(db, 1)
@@ -183,7 +183,7 @@ class TestGetFarmConditions:
         assert conditions["current_crop"]["name"] == "Paddy"
 
     def test_missing_farm_returns_none(self, db):
-        assert get_farm_conditions(db, 9999) is None
+        assert get_farm_conditions(db, 999999) is None
 
     def test_null_soil_type_does_not_raise(self, db):
         """A farm with NULL soil_type must return conditions without exception."""
@@ -253,7 +253,7 @@ class TestGetAlternativeCrops:
             )
 
     def test_unknown_farm_returns_empty_list(self, db):
-        assert get_alternative_crops(db, 9999) == []
+        assert get_alternative_crops(db, 999999) == []
 
     def test_results_are_deterministic(self, db):
         """Same call twice must return same order."""

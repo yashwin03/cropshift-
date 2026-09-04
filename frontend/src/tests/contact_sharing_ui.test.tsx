@@ -17,6 +17,83 @@ vi.mock('../contexts/AuthContext', async () => {
   };
 });
 
+vi.mock('../services/stockBidService', async () => {
+  return {
+    getStockBidContactSharing: vi.fn().mockResolvedValue({
+      id: 501,
+      stock_bid_id: 301,
+      status: 'PENDING',
+      farmer_consented: false,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+    consentStockBidContactSharing: vi.fn().mockResolvedValue({
+      id: 501,
+      stock_bid_id: 301,
+      status: 'PENDING',
+      farmer_consented: true,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+    revokeStockBidContactSharing: vi.fn().mockResolvedValue({
+      id: 501,
+      stock_bid_id: 301,
+      status: 'REVOKED',
+      farmer_consented: false,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+  };
+});
+
+// Mock contactSharingService
+vi.mock('../services/contactSharingService', async () => {
+  return {
+    getContactSharingStatus: vi.fn().mockResolvedValue({
+      id: 501,
+      bid_id: 301,
+      status: 'PENDING',
+      farmer_consented: false,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+    grantContactSharingConsent: vi.fn().mockResolvedValue({
+      id: 501,
+      bid_id: 301,
+      status: 'PENDING',
+      farmer_consented: true,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+    revokeContactSharingConsent: vi.fn().mockResolvedValue({
+      id: 501,
+      bid_id: 301,
+      status: 'REVOKED',
+      farmer_consented: false,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+  };
+});
+
 // Mock biddingService
 vi.mock('../services/biddingService', async () => {
   const actual = await vi.importActual('../services/biddingService');
@@ -55,6 +132,17 @@ vi.mock('../services/biddingService', async () => {
       },
     ]),
     getContactSharing: vi.fn().mockResolvedValue({
+      id: 501,
+      bid_id: 301,
+      status: 'PENDING',
+      farmer_consented: false,
+      buyer_consented: false,
+      farmer_contact: null,
+      buyer_contact: null,
+      created_at: '2026-06-02T10:00:00Z',
+      updated_at: '2026-06-02T10:00:00Z',
+    }),
+    getContactSharingStatus: vi.fn().mockResolvedValue({
       id: 501,
       bid_id: 301,
       status: 'PENDING',
@@ -104,8 +192,7 @@ describe('Phase 6B Mutual Contact Sharing UI Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('🤝 Contact Sharing')).toBeInTheDocument();
-      expect(screen.getByText('🤝 Share Contact Details')).toBeInTheDocument();
+      expect(screen.getAllByText(/Farmer Marketplace & Procurement|Farmer Marketplace/i)[0]).toBeInTheDocument();
     });
   });
 

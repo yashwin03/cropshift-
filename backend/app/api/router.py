@@ -18,6 +18,9 @@ from app.api.v1 import (
     stock_bids,
     trade_orders,
     peer_proof,
+    crop_cultivation,
+    ratings,
+    reports,
 )
 
 api_router = APIRouter()
@@ -27,6 +30,7 @@ api_router.include_router(health.router)
 api_router.include_router(farms.router, prefix="/farms", tags=["Farms"])
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
 api_router.include_router(peer_proof.router, prefix="/peer-proof", tags=["Peer Proof"])
+api_router.include_router(crop_cultivation.router, prefix="/cultivation-records", tags=["Cultivation Records"])
 api_router.include_router(profitability.router, prefix="/profitability", tags=["Profitability"])
 api_router.include_router(markets.router, prefix="/markets", tags=["Markets"])
 api_router.include_router(subsidies.router, prefix="/subsidies", tags=["Subsidies"])
@@ -41,4 +45,6 @@ api_router.include_router(contact_sharing.router, tags=["Contact Sharing"])
 api_router.include_router(stock_lots.router, tags=["Stock Lots"])
 api_router.include_router(stock_bids.router, tags=["Stock Bids"])
 api_router.include_router(trade_orders.router, tags=["Trade Orders"])
+api_router.include_router(ratings.router)
+api_router.include_router(reports.router)
 

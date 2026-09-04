@@ -18,5 +18,8 @@ from .stock_lot import StockLot, StockLotStatus  # noqa: F401
 from .stock_bid import StockBid, StockBidStatus  # noqa: F401
 from .trade_order import TradeOrder, TradeOrderStatus, TradeOrderCancellationReason  # noqa: F401
 from .peer_proof import PeerProof  # noqa: F401
+from .crop_cultivation import CropCultivationRecord, CultivationStage, EvidenceStatus  # noqa: F401
+from .rating import Rating  # noqa: F401
+from .report import Report  # noqa: F401
 
 

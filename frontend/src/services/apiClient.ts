@@ -13,9 +13,9 @@ const getBaseUrl = () => {
     return '';
   }
   if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return 'http://localhost:8000';
+    return 'http://127.0.0.1:8000';
   }
-  return 'http://localhost:8000';
+  return 'http://127.0.0.1:8000';
 };
 
 const apiClient = axios.create({
@@ -25,7 +25,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token && config.headers) {
+  if (token && config.headers && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -39,13 +39,13 @@ apiClient.interceptors.response.use(
       message: 'An unexpected error occurred.'
     };
 
-    if (error.response && error.response.data) {
+    if (error.response) {
       const data = error.response.data as any;
       const statusCode = error.response.status;
       appError.status = statusCode;
       appError.response = error.response;
 
-      if (data.error) {
+      if (data && data.error) {
         let msg = data.error.message || 'An unexpected error occurred.';
         if (Array.isArray(data.error.details) && data.error.details.length > 0) {
           const detailMsgs = data.error.details
@@ -58,15 +58,15 @@ apiClient.interceptors.response.use(
         appError.code = data.error.code || (statusCode === 401 ? 'UNAUTHORIZED' : statusCode === 403 ? 'FORBIDDEN' : 'CLIENT_ERROR');
         appError.message = msg;
         appError.details = data.error.details;
-      } else if (typeof data.detail === 'string') {
+      } else if (data && typeof data.detail === 'string') {
         appError.code = statusCode === 401 ? 'UNAUTHORIZED' : statusCode === 403 ? 'FORBIDDEN' : statusCode === 422 ? 'VALIDATION_ERROR' : 'CLIENT_ERROR';
         appError.message = data.detail;
-      } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+      } else if (data && Array.isArray(data.detail) && data.detail.length > 0) {
         const msgs = data.detail.map((d: any) => d?.msg || d?.message || JSON.stringify(d));
         appError.code = 'VALIDATION_ERROR';
         appError.message = msgs.join('; ');
         appError.details = data.detail;
-      } else if (typeof data.message === 'string') {
+      } else if (data && typeof data.message === 'string') {
         appError.code = statusCode === 401 ? 'UNAUTHORIZED' : statusCode === 403 ? 'FORBIDDEN' : 'CLIENT_ERROR';
         appError.message = data.message;
       } else if (statusCode === 401) {
@@ -75,11 +75,20 @@ apiClient.interceptors.response.use(
       } else if (statusCode === 403) {
         appError.code = 'FORBIDDEN';
         appError.message = 'Account does not have permission.';
+      } else if (statusCode === 400) {
+        appError.code = 'CLIENT_ERROR';
+        appError.message = typeof data === 'string' ? data : 'Bad request.';
+      } else if (statusCode === 422) {
+        appError.code = 'VALIDATION_ERROR';
+        appError.message = 'Validation error occurred.';
       } else if (statusCode === 500) {
         appError.code = 'SERVER_ERROR';
         appError.message = 'Something went wrong on the CropShift service.';
+      } else {
+        appError.code = statusCode >= 500 ? 'SERVER_ERROR' : 'CLIENT_ERROR';
+        appError.message = `Request failed with status ${statusCode}`;
       }
-    } else if (error.request || error.code === 'ERR_NETWORK') {
+    } else if (!error.response && (error.request || error.code === 'ERR_NETWORK')) {
       appError.status = 0;
       appError.code = 'NETWORK_ERROR';
       appError.message = 'CropShift services are currently unreachable. Please check that backend service is running.';

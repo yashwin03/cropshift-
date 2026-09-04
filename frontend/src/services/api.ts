@@ -113,11 +113,11 @@ export async function getHealth(): Promise<{ status: string }> {
 }
 
 export async function createFutureCropLot(payload: any, token?: string): Promise<any> {
-  const response = await apiClient.post('/api/v1/future-crop-lots', payload, {
+  const response = await apiClient.post('/api/v1/farmer/future-crop-lots', payload, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
   return response.data;
 }
 
-export { createDirectStockLot as createStockLot } from './stockLotService';
+export { createDirectStockLot as createStockLot, uploadQualityCertificate, publishFarmerStockLot } from './stockLotService';
 

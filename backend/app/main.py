@@ -19,6 +19,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount uploads directory for quality certificates and documents
+import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../uploads"))
+os.makedirs(os.path.join(uploads_dir, "quality_certs"), exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
 # Mount the v1 router under /api/v1
 app.include_router(api_router, prefix="/api/v1")
 

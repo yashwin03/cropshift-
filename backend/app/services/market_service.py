@@ -160,3 +160,120 @@ def get_best_market_for_crop(
     )
 
     return candidates[0]
+
+
+def get_crop_market_price_info(
+    db: Session,
+    crop_id: int,
+    farm_id: Optional[int] = None
+) -> Optional[dict]:
+    """
+    Retrieves current market price, price date, data status, data source,
+    and recommended target price range for a crop.
+    """
+    crop = db.get(Crop, crop_id)
+    if not crop:
+        return None
+
+    best_market = None
+    if farm_id is not None:
+        best_market = get_best_market_for_crop(db, farm_id, crop_id)
+
+    price: Optional[float] = None
+    market_name: str = "Regional Central APMC"
+    data_status: str = "ESTIMATED"
+    data_source: str = "Database Snapshot"
+    price_date: Optional[str] = None
+
+    if best_market and best_market.get("price") is not None:
+        price = float(best_market["price"])
+        market_name = best_market.get("market_name", "APMC Market")
+        data_status = best_market.get("data_status", "LIVE")
+        data_source = best_market.get("data_source", "Database Snapshot")
+
+        mp_rec = (
+            db.query(MarketPrice)
+            .filter(MarketPrice.crop_id == crop_id)
+            .order_by(MarketPrice.price_date.desc())
+            .first()
+        )
+        if mp_rec and mp_rec.price_date:
+            price_date = mp_rec.price_date.strftime("%d %b %Y")
+    else:
+        mp_rec = (
+            db.query(MarketPrice)
+            .filter(MarketPrice.crop_id == crop_id)
+            .order_by(MarketPrice.price_date.desc())
+            .first()
+        )
+        if mp_rec and mp_rec.price is not None:
+            price = float(mp_rec.price)
+            if mp_rec.market:
+                market_name = mp_rec.market.name
+            data_status = mp_rec.data_status or "STATIC"
+            data_source = mp_rec.data_source or "Database Snapshot"
+            if mp_rec.price_date:
+                price_date = mp_rec.price_date.strftime("%d %b %Y")
+        else:
+            econ = db.query(CropEconomics).filter(CropEconomics.crop_id == crop_id).first()
+            if econ and econ.expected_price_per_unit:
+                price = float(econ.expected_price_per_unit)
+                market_name = "Regional Central APMC"
+                data_status = econ.data_status or "ESTIMATED"
+                data_source = econ.data_source or "Reference Economics Estimate"
+            else:
+                return None
+
+    # Calculate dynamic target price range (4% margin rounded to nearest 50, minimum 50)
+    delta = max(50.0, round((price * 0.04) / 50.0) * 50.0)
+    min_target_price = round(price - delta, 2)
+    max_target_price = round(price + delta, 2)
+
+    return {
+        "crop_id": crop_id,
+        "crop_name": crop.name,
+        "price": price,
+        "price_unit": "quintal",
+        "min_target_price": min_target_price,
+        "max_target_price": max_target_price,
+        "price_date": price_date,
+        "market_name": market_name,
+        "data_status": data_status,
+        "data_source": data_source,
+    }
+
+
+def validate_target_price_bounds(
+    db: Session,
+    crop_id: int,
+    target_price: Optional[float],
+    farm_id: Optional[int] = None
+) -> None:
+    """
+    Validates target_price against the crop's dynamic market price bounds.
+    Raises HTTPException(400) if out of bounds or if market price unavailable.
+    """
+    if target_price is None:
+        return
+
+    price_info = get_crop_market_price_info(db, crop_id, farm_id)
+    if not price_info or price_info.get("min_target_price") is None or price_info.get("max_target_price") is None:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Market price unavailable. Target price cannot be validated."
+        )
+
+    min_p = price_info["min_target_price"]
+    max_p = price_info["max_target_price"]
+
+    if target_price < min_p or target_price > max_p:
+        from fastapi import HTTPException, status
+        min_fmt = f"{int(min_p):,}" if min_p.is_integer() else f"{min_p:,.2f}"
+        max_fmt = f"{int(max_p):,}" if max_p.is_integer() else f"{max_p:,.2f}"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Target price must be between ₹{min_fmt} and ₹{max_fmt} per quintal based on today's market price."
+        )
+
+

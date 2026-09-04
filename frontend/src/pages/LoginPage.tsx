@@ -17,8 +17,11 @@ export default function LoginPage() {
 
   // Sign Up state
   const [regUsername, setRegUsername] = useState('');
+  const [regFullName, setRegFullName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regGstNumber, setRegGstNumber] = useState('');
 
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -70,6 +73,8 @@ export default function LoginPage() {
       });
 
       const token = res.data.access_token;
+      localStorage.setItem('token', token);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       // Fetch authenticated user profile to get authoritative backend role & Farmer ID
       const userRes = await apiClient.get('/api/v1/auth/me', {
@@ -116,15 +121,28 @@ export default function LoginPage() {
     setSuccessMsg('');
 
     const cleanUsername = regUsername.trim();
+    const cleanFullName = regFullName.trim();
+    const cleanPhone = regPhone.trim();
     const cleanEmail = regEmail.trim();
+    const cleanGst = regGstNumber.trim();
 
     if (!cleanUsername) {
       setError('Username is required.');
       setIsLoading(false);
       return;
     }
+    if (!cleanFullName) {
+      setError('Full Name is required.');
+      setIsLoading(false);
+      return;
+    }
+    if (!cleanPhone) {
+      setError('Phone Number is required.');
+      setIsLoading(false);
+      return;
+    }
     if (!cleanEmail || !cleanEmail.includes('@')) {
-      setError('A valid email address is compulsory for registration.');
+      setError('A valid email address is required.');
       setIsLoading(false);
       return;
     }
@@ -140,9 +158,12 @@ export default function LoginPage() {
       // 1. Register new user
       await apiClient.post('/api/v1/auth/register', {
         username: cleanUsername,
+        full_name: cleanFullName,
+        phone: cleanPhone,
         email: cleanEmail,
         password: regPassword,
         role: targetRole,
+        gst_number: targetRole === 'BUYER' ? cleanGst || undefined : undefined,
       });
 
       setSuccessMsg('Account created successfully! Authorizing access...');
@@ -159,6 +180,9 @@ export default function LoginPage() {
       });
 
       const token = tokenRes.data.access_token;
+      localStorage.setItem('token', token);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
       const userRes = await apiClient.get('/api/v1/auth/me', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,14 +199,22 @@ export default function LoginPage() {
         navigate('/');
       }
     } catch (err: any) {
-      if (err?.code === 'NETWORK_ERROR' || err?.code === 'ERR_NETWORK') {
+      if (err?.status === 400 || err?.code === 'CLIENT_ERROR') {
+        if (err.message?.includes('Username already registered')) {
+          setError('This username is already registered. Please choose another username or switch to Sign In.');
+        } else if (err.message?.includes('Email address already registered')) {
+          setError('This email address is already registered. Please use another email address or switch to Sign In.');
+        } else if (err.message?.includes('Phone number already registered')) {
+          setError('This phone number is already registered. Please use another phone number or switch to Sign In.');
+        } else {
+          setError(err.message || 'Registration failed. Please check your details and try again.');
+        }
+      } else if (err?.status === 422 || err?.code === 'VALIDATION_ERROR') {
+        setError(err.message || 'Please check the registration details entered.');
+      } else if (err?.code === 'NETWORK_ERROR' || err?.code === 'ERR_NETWORK' || err?.status === 0) {
         setError('CropShift services are currently unreachable. Please check that backend service is running.');
       } else if (err?.message) {
-        if (err.message.includes('Username already registered')) {
-          setError('This username is already registered. Please choose another username or switch to Sign In.');
-        } else {
-          setError(err.message);
-        }
+        setError(err.message);
       } else {
         setError('Registration failed. Please check your details and try again.');
       }
@@ -547,6 +579,21 @@ export default function LoginPage() {
 
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
+                  <label htmlFor="regFullName" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    id="regFullName"
+                    type="text"
+                    value={regFullName}
+                    onChange={(e) => setRegFullName(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent min-h-[46px] transition-all"
+                    placeholder="e.g. Ramesh Kumar"
+                    required
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="regUsername" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                     Choose Username *
                   </label>
@@ -556,14 +603,29 @@ export default function LoginPage() {
                     value={regUsername}
                     onChange={(e) => setRegUsername(e.target.value)}
                     className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent min-h-[46px] transition-all"
-                    placeholder="e.g. farmer_karnataka"
+                    placeholder="e.g. ramesh_farmer"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="regPhone" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    id="regPhone"
+                    type="tel"
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent min-h-[46px] transition-all"
+                    placeholder="e.g. 9876543210"
                     required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="regEmail" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Email Address * <span className="text-emerald-400 font-bold lowercase">(compulsory)</span>
+                    Email Address *
                   </label>
                   <input
                     id="regEmail"
@@ -572,9 +634,25 @@ export default function LoginPage() {
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent min-h-[46px] transition-all"
-                    placeholder="e.g. farmer@cropshift.com"
+                    placeholder="e.g. ramesh@cropshift.com"
                   />
                 </div>
+
+                {!isFarmer && (
+                  <div>
+                    <label htmlFor="regGstNumber" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                      GST Number <span className="text-cyan-400 font-normal lowercase">(for Buyer verification)</span>
+                    </label>
+                    <input
+                      id="regGstNumber"
+                      type="text"
+                      value={regGstNumber}
+                      onChange={(e) => setRegGstNumber(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent min-h-[46px] transition-all"
+                      placeholder="e.g. 29ABCDE1234F1Z5"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label htmlFor="regPassword" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">

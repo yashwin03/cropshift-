@@ -3,6 +3,9 @@ from app.models.user import User, UserRole
 from app.api.v1.auth import get_password_hash
 
 def test_farmer_id_generation_and_persistence(db_session):
+    db_session.query(User).filter(User.username.in_(["farmer_test_id", "buyer_test_id", "farmer_dup_1", "farmer_dup_2"])).delete(synchronize_session=False)
+    db_session.commit()
+
     user = User(
         username="farmer_test_id",
         email="farmer_test_id@cropshift.com",

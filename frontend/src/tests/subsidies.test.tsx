@@ -32,19 +32,17 @@ const BASE_SCHEME: SubsidyScheme = {
 describe('Subsidy Matcher Tests', () => {
   test('all three eligibility statuses render correct wording', () => {
     const { rerender } = render(<SubsidyCard scheme={BASE_SCHEME} />);
-    expect(screen.getByTestId('eligibility-status-banner')).toHaveTextContent('You may qualify');
+    expect(screen.getByTestId('eligibility-status-banner')).toHaveTextContent('Match Status: You may qualify');
     rerender(<SubsidyCard scheme={{ ...BASE_SCHEME, eligibility_status: 'VERIFICATION_REQUIRED' }} />);
-    expect(screen.getByText('Verification required')).toBeInTheDocument();
+    expect(screen.getByTestId('eligibility-status-banner')).toHaveTextContent('Match Status: Land Ownership & Aadhaar Verification Required');
     rerender(<SubsidyCard scheme={{ ...BASE_SCHEME, eligibility_status: 'LIKELY_NOT_ELIGIBLE' }} />);
-    expect(screen.getByText('Likely not applicable')).toBeInTheDocument();
+    expect(screen.getByTestId('eligibility-status-banner')).toHaveTextContent('Likely not applicable');
   });
 
-  test('verification_required: true shows the verification notice', () => {
-    const { rerender } = render(<SubsidyCard scheme={BASE_SCHEME} />);
-    expect(screen.queryByTestId('verification-notice')).not.toBeInTheDocument();
-    rerender(<SubsidyCard scheme={{ ...BASE_SCHEME, verification_required: true }} />);
+  test('verification notice shows final eligibility confirmation notice', () => {
+    render(<SubsidyCard scheme={BASE_SCHEME} />);
     expect(screen.getByTestId('verification-notice')).toBeInTheDocument();
-    expect(screen.getByText(/Your actual eligibility must be verified/i)).toBeInTheDocument();
+    expect(screen.getByText(/Final eligibility must be confirmed/i)).toBeInTheDocument();
   });
 });
 

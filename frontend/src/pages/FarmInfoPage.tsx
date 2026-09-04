@@ -7,6 +7,8 @@ import type { FarmDetails } from '../mocks/fixtures';
 import { getRecommendation, createFarm } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { IconMapPin, IconCheck, IconSparkles } from '../components/common/Icons';
+import MyCropsSection from '../components/farmer/MyCropsSection';
+
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 
@@ -618,62 +620,84 @@ export default function FarmInfoPage() {
   ];
 
   return (
-    <div className="max-w-xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">
-          {stepTitles[step - 1]}
-        </h1>
-        <p className="text-gray-500 mt-1 text-sm">
-          We need a few details to give you the most accurate crop recommendation.
-        </p>
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {/* My Farm Profile Header Banner */}
+      <div className="bg-slate-900/90 backdrop-blur-2xl p-5 rounded-3xl border border-slate-800 shadow-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 bg-blue-950 text-blue-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-blue-500/30 mb-1">
+            <span>Farmer ID: {user?.farmer_id || 'FS-000123'}</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+            My Farm Profile
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Manage your authoritative crop records and update your farm location and soil conditions
+          </p>
+        </div>
       </div>
 
-      <ProgressIndicator step={step} />
+      {/* 1. MY CROPS SECTION */}
+      <MyCropsSection />
 
-      <Card>
-        {step === 1 && (
-          <StepGeneralInfo values={values} errors={errors} onChange={handleChange} />
-        )}
-        {step === 2 && (
-          <StepCropSelection values={values} errors={errors} onChange={handleChange} />
-        )}
-        {step === 3 && (
-          <StepFarmConditions values={values} errors={errors} onChange={handleChange} />
-        )}
-        {step === 4 && (
-          <StepReview 
-            values={values} 
-            isSubmitting={isSubmitting} 
-            submitError={submitError} 
-            onSubmit={handleSubmit} 
-          />
-        )}
+      {/* 2. FARM INFORMATION UPDATE FORM */}
+      <div className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-slate-800 shadow-2xl p-5 sm:p-6 space-y-5">
+        <div className="border-b border-slate-800 pb-4">
+          <h2 className="text-xl font-black text-white tracking-tight">
+            Farm Information &amp; Soil Conditions
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {stepTitles[step - 1]}
+          </p>
+        </div>
 
-        {/* Navigation Buttons */}
-        {step < 4 && (
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
-            {step > 1 ? (
-              <Button variant="ghost" onClick={handleBack} className="min-h-[44px]">
-                ← Back
+        <ProgressIndicator step={step} />
+
+        <div className="bg-slate-950/60 p-4 sm:p-6 rounded-2xl border border-slate-800/80">
+          {step === 1 && (
+            <StepGeneralInfo values={values} errors={errors} onChange={handleChange} />
+          )}
+          {step === 2 && (
+            <StepCropSelection values={values} errors={errors} onChange={handleChange} />
+          )}
+          {step === 3 && (
+            <StepFarmConditions values={values} errors={errors} onChange={handleChange} />
+          )}
+          {step === 4 && (
+            <StepReview 
+              values={values} 
+              isSubmitting={isSubmitting} 
+              submitError={submitError} 
+              onSubmit={handleSubmit} 
+            />
+          )}
+
+          {/* Navigation Buttons */}
+          {step < 4 && (
+            <div className="flex justify-between mt-8 pt-6 border-t border-slate-800">
+              {step > 1 ? (
+                <Button variant="ghost" onClick={handleBack} className="min-h-[44px]">
+                  ← Back
+                </Button>
+              ) : (
+                <div /> /* spacer */
+              )}
+              <Button variant="primary" onClick={handleNext} className="min-h-[44px] px-8 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs">
+                {step === 3 ? 'Review →' : 'Next →'}
               </Button>
-            ) : (
-              <div /> /* spacer */
-            )}
-            <Button variant="primary" onClick={handleNext} className="min-h-[44px] px-8">
-              {step === 3 ? 'Review →' : 'Next →'}
-            </Button>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Back button on review step */}
-        {step === 4 && (
-          <div className="mt-4 flex justify-start">
-            <Button variant="ghost" onClick={handleBack} className="text-sm min-h-[44px]">
-              ← Edit Details
-            </Button>
-          </div>
-        )}
-      </Card>
+          {/* Back button on review step */}
+          {step === 4 && (
+            <div className="mt-4 flex justify-start">
+              <Button variant="ghost" onClick={handleBack} className="text-sm min-h-[44px]">
+                ← Edit Details
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+

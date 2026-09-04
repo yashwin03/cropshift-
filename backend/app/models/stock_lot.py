@@ -23,6 +23,7 @@ class StockLot(Base):
     farmer_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
     farm_id = Column(Integer, ForeignKey("farm.id"), nullable=False, index=True)
     future_crop_lot_id = Column(Integer, ForeignKey("future_crop_lot.id"), nullable=True, index=True)
+    cultivation_record_id = Column(Integer, ForeignKey("crop_cultivation_record.id"), nullable=True, index=True)
     crop_id = Column(Integer, ForeignKey("crop.id"), nullable=False, index=True)
 
     variety = Column(String, nullable=True)
@@ -31,6 +32,10 @@ class StockLot(Base):
     actual_harvest_date = Column(Date, nullable=False, index=True)
     quality_grade = Column(String, nullable=True)
     asking_price_per_quintal = Column(Float, nullable=True)
+
+    quality_cert_filename = Column(String, nullable=True)
+    quality_cert_url = Column(String, nullable=True)
+    quality_cert_uploaded_at = Column(DateTime, nullable=True)
 
     status = Column(Enum(StockLotStatus), nullable=False, default=StockLotStatus.DRAFT, index=True)
 
@@ -41,4 +46,5 @@ class StockLot(Base):
     farmer = relationship("User")
     farm = relationship("Farm")
     future_crop_lot = relationship("FutureCropLot")
+    cultivation_record = relationship("CropCultivationRecord")
     crop = relationship("Crop")

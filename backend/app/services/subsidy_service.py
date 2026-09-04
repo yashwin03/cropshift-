@@ -73,6 +73,7 @@ def match_subsidies(
         "required_information": nmeo_req_info,
         "support_information": "Subsidies for high-yielding oilseed seed distribution, farm toolkits, and cultivator training.",
         "verification_required": nmeo_verification,
+        "official_url": "https://nfsm.gov.in/",
         "data_source": "Ministry of Agriculture & Farmers Welfare, Government of India"
     })
 
@@ -102,6 +103,7 @@ def match_subsidies(
         "required_information": pm_kisan_req_info,
         "support_information": "Income support of ₹6,000 per year in three equal installments to all landholding farmer families.",
         "verification_required": pm_kisan_verification,
+        "official_url": "https://pmkisan.gov.in/",
         "data_source": "pmkisan.gov.in (Official PM-KISAN Portal)"
     })
 
@@ -131,6 +133,7 @@ def match_subsidies(
         "required_information": pmfby_req_info,
         "support_information": "Low-premium crop insurance (1.5% - 2.0% farmer contribution) protecting against natural calamities and yield losses.",
         "verification_required": pmfby_verification,
+        "official_url": "https://pmfby.gov.in/",
         "data_source": "pmfby.gov.in (National Crop Insurance Portal)"
     })
 
@@ -159,6 +162,7 @@ def match_subsidies(
         "required_information": shc_req_info,
         "support_information": "Provides soil nutrient status cards and tailored fertilizer/macro-nutrient dosage recommendations.",
         "verification_required": shc_verification,
+        "official_url": "https://soilhealth.dac.gov.in/",
         "data_source": "soilhealth.dac.gov.in"
     })
 
@@ -199,6 +203,7 @@ def match_subsidies(
         "required_information": fruits_req_info,
         "support_information": "Additional state-specific incentives and certified seed subsidies via the FRUITS database portal.",
         "verification_required": fruits_verification,
+        "official_url": "https://fruits.karnataka.gov.in/",
         "data_source": "fruits.karnataka.gov.in"
     })
 

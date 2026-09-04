@@ -136,11 +136,15 @@ describe('LoginPage Component Tests', () => {
 
     expect(screen.getByText(/Create New Farmer Account/i)).toBeInTheDocument();
 
+    const fullNameInput = screen.getByLabelText(/full name/i);
     const usernameInput = screen.getByLabelText(/choose username/i);
+    const phoneInput = screen.getByLabelText(/phone number/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/choose password/i);
 
+    fireEvent.change(fullNameInput, { target: { value: 'New Farmer' } });
     fireEvent.change(usernameInput, { target: { value: 'newfarmer' } });
+    fireEvent.change(phoneInput, { target: { value: '9876543210' } });
     fireEvent.change(emailInput, { target: { value: 'newfarmer@cropshift.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
@@ -150,9 +154,12 @@ describe('LoginPage Component Tests', () => {
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/auth/register', {
         username: 'newfarmer',
+        full_name: 'New Farmer',
+        phone: '9876543210',
         email: 'newfarmer@cropshift.com',
         password: 'password123',
         role: 'FARMER',
+        gst_number: undefined,
       });
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });

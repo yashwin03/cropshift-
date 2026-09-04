@@ -181,7 +181,7 @@ export default function BuyerPortalPage() {
         </button>
 
         <Link
-          to="/bidding"
+          to="/bidding?tab=opportunities"
           onClick={() => setRole('buyer')}
           className="p-4 bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-blue-500/60 rounded-2xl text-left transition-all space-y-1 group block shadow-xl"
         >
@@ -190,7 +190,7 @@ export default function BuyerPortalPage() {
         </Link>
 
         <Link
-          to="/bidding"
+          to="/bidding?tab=buyer_stock"
           onClick={() => setRole('buyer')}
           className="p-4 bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-blue-500/60 rounded-2xl text-left transition-all space-y-1 group block shadow-xl"
         >
@@ -199,7 +199,7 @@ export default function BuyerPortalPage() {
         </Link>
 
         <Link
-          to="/bidding"
+          to="/bidding?tab=my_bids"
           onClick={() => setRole('buyer')}
           className="p-4 bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-blue-500/60 rounded-2xl text-left transition-all space-y-1 group block shadow-xl"
         >
@@ -209,13 +209,13 @@ export default function BuyerPortalPage() {
         </Link>
 
         <Link
-          to="/bidding"
+          to="/bidding?tab=trade_orders"
           onClick={() => setRole('buyer')}
           className="p-4 bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-blue-500/60 rounded-2xl text-left transition-all space-y-1 group block shadow-xl"
         >
           <div className="text-xl">🤝</div>
           <div className="font-extrabold text-white text-xs group-hover:text-blue-400">My Deals</div>
-          <div className="text-[10px] text-slate-400">Accepted trade allocations</div>
+          <div className="text-[10px] text-slate-400">Accepted trade allocations & ratings</div>
         </Link>
       </div>
 

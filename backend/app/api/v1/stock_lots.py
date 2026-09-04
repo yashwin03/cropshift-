@@ -19,8 +19,12 @@ from ...schemas.stock_lot import (
     StockLotMarketplaceView,
 )
 from .auth import get_current_user, require_role
+from .farms import resolve_farmer_farm
+from ...services.market_service import validate_target_price_bounds
+
 
 router = APIRouter()
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +46,9 @@ def _build_stock_lot_response(lot: StockLot) -> StockLotResponse:
         actual_harvest_date=lot.actual_harvest_date,
         quality_grade=lot.quality_grade,
         asking_price_per_quintal=lot.asking_price_per_quintal,
+        quality_cert_filename=getattr(lot, 'quality_cert_filename', None),
+        quality_cert_url=getattr(lot, 'quality_cert_url', None),
+        quality_cert_uploaded_at=getattr(lot, 'quality_cert_uploaded_at', None),
         status=lot.status,
         created_at=lot.created_at,
         updated_at=lot.updated_at,
@@ -93,6 +100,10 @@ def harvest_future_crop_lot(
             detail=f"Future crop lot in status {future_lot.status.value} is not eligible for harvest",
         )
 
+    asking_price = payload.asking_price_per_quintal or future_lot.asking_price_per_quintal
+    if asking_price is not None:
+        validate_target_price_bounds(db, future_lot.crop_id, asking_price, future_lot.farm_id)
+
     # Transition FutureCropLot status to HARVESTED
     future_lot.status = FutureCropLotStatus.HARVESTED
 
@@ -107,7 +118,7 @@ def harvest_future_crop_lot(
         available_quantity_quintals=payload.actual_quantity_quintals,
         actual_harvest_date=payload.actual_harvest_date,
         quality_grade=payload.quality_grade or future_lot.quality_grade,
-        asking_price_per_quintal=payload.asking_price_per_quintal or future_lot.asking_price_per_quintal,
+        asking_price_per_quintal=asking_price,
         status=StockLotStatus.DRAFT,
     )
 
@@ -133,20 +144,8 @@ def create_direct_stock_lot(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.FARMER)),
 ):
-    # Verify farm exists and belongs to farmer
-    farm = db.query(Farm).filter(Farm.id == payload.farm_id).first()
-    if not farm:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Farm {payload.farm_id} not found",
-        )
-
-    # Ownership check via farmer_id or farm.owner_id
-    if farm.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not own this farm",
-        )
+    # Verify farm exists and belongs to farmer via canonical ownership resolver
+    farm = resolve_farmer_farm(db, current_user, payload.farm_id)
 
     crop = db.query(Crop).filter(Crop.id == payload.crop_id).first()
     if not crop:
@@ -154,6 +153,24 @@ def create_direct_stock_lot(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Crop {payload.crop_id} not found",
         )
+
+    if payload.asking_price_per_quintal is not None:
+        validate_target_price_bounds(db, payload.crop_id, payload.asking_price_per_quintal, farm.id)
+
+    # Duplicate protection check (Requirement 5)
+    existing_stock = (
+        db.query(StockLot)
+        .filter(
+            StockLot.farmer_id == current_user.id,
+            StockLot.farm_id == payload.farm_id,
+            StockLot.crop_id == payload.crop_id,
+            StockLot.actual_quantity_quintals == payload.actual_quantity_quintals,
+            StockLot.status.in_([StockLotStatus.DRAFT, StockLotStatus.AVAILABLE])
+        )
+        .first()
+    )
+    if existing_stock:
+        return _build_stock_lot_response(existing_stock)
 
     stock_lot = StockLot(
         farmer_id=current_user.id,
@@ -250,9 +267,13 @@ def update_stock_lot(
             detail="Only DRAFT stock lots can be modified",
         )
 
+    if payload.asking_price_per_quintal is not None:
+        validate_target_price_bounds(db, stock_lot.crop_id, payload.asking_price_per_quintal, stock_lot.farm_id)
+
     if payload.actual_quantity_quintals is not None:
         stock_lot.actual_quantity_quintals = payload.actual_quantity_quintals
         stock_lot.available_quantity_quintals = payload.actual_quantity_quintals
+
 
     if payload.actual_harvest_date is not None:
         stock_lot.actual_harvest_date = payload.actual_harvest_date
@@ -299,6 +320,12 @@ def publish_stock_lot(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot publish stock lot with zero available quantity",
+        )
+
+    if not stock_lot.quality_cert_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Quality certificate is required for already harvested crops.",
         )
 
     stock_lot.status = StockLotStatus.AVAILABLE
@@ -366,21 +393,27 @@ def get_open_stock_lots(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Marketplace discovery endpoint for AVAILABLE harvested stock.
+    Marketplace discovery endpoint for AVAILABLE harvested stock (Oilseeds only).
     Shields private farmer contact info and exact PostGIS GPS coordinates.
     """
     lots = (
         db.query(StockLot)
+        .join(Crop, StockLot.crop_id == Crop.id)
         .filter(
             StockLot.status == StockLotStatus.AVAILABLE,
             StockLot.available_quantity_quintals > 0,
+            Crop.is_oilseed == True,
         )
         .order_by(StockLot.actual_harvest_date.desc())
         .all()
     )
 
+    seen_ids = set()
     result = []
     for lot in lots:
+        if lot.id in seen_ids:
+            continue
+        seen_ids.add(lot.id)
         result.append(
             StockLotMarketplaceView(
                 id=lot.id,
@@ -391,6 +424,9 @@ def get_open_stock_lots(
                 actual_harvest_date=lot.actual_harvest_date,
                 quality_grade=lot.quality_grade,
                 asking_price_per_quintal=lot.asking_price_per_quintal,
+                quality_cert_filename=getattr(lot, 'quality_cert_filename', None),
+                quality_cert_url=getattr(lot, 'quality_cert_url', None),
+                quality_cert_uploaded_at=getattr(lot, 'quality_cert_uploaded_at', None),
                 district=lot.farm.district if lot.farm else None,
                 state=lot.farm.state if lot.farm else None,
                 status=lot.status,
@@ -398,3 +434,121 @@ def get_open_stock_lots(
         )
 
     return result
+
+
+import os
+import re
+from datetime import datetime
+from fastapi import UploadFile, File
+from fastapi.responses import FileResponse
+
+@router.post(
+    "/farmer/stock-lots/{stock_id}/quality-certificate",
+    response_model=StockLotResponse,
+    summary="Upload a quality certificate document for a harvested stock lot",
+)
+async def upload_quality_certificate(
+    stock_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.FARMER, UserRole.BUYER)),
+):
+    stock_lot = db.query(StockLot).filter(StockLot.id == stock_id).first()
+    if not stock_lot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Stock lot {stock_id} not found",
+        )
+
+    if stock_lot.farmer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not own this stock lot",
+        )
+
+    filename = file.filename or "quality_cert.pdf"
+    ext = filename.split(".")[-1].lower() if "." in filename else ""
+    allowed_exts = {"pdf", "jpg", "jpeg", "png"}
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file format. Please upload a PDF, JPG, or PNG document.",
+        )
+
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10MB limit. Please upload a smaller document.",
+        )
+
+    safe_name = re.sub(r'[^a-zA-Z0-9_\.-]', '_', filename)
+    timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    stored_filename = f"lot_{stock_id}_{timestamp_str}_{safe_name}"
+
+    uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../uploads/quality_certs"))
+    os.makedirs(uploads_dir, exist_ok=True)
+    file_path = os.path.join(uploads_dir, stored_filename)
+
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    stock_lot.quality_cert_filename = filename
+    stock_lot.quality_cert_url = f"/uploads/quality_certs/{stored_filename}"
+    stock_lot.quality_cert_uploaded_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(stock_lot)
+
+    return _build_stock_lot_response(stock_lot)
+
+
+@router.get(
+    "/stock-lots/{stock_id}/certificate",
+    summary="Download or view quality certificate for a harvested stock lot",
+)
+def get_stock_lot_certificate(
+    stock_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    stock_lot = db.query(StockLot).filter(StockLot.id == stock_id).first()
+    if not stock_lot or not stock_lot.quality_cert_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Quality certificate not found for this stock lot",
+        )
+
+    # Access control check: Draft certificates are only accessible to the owning farmer
+    if stock_lot.status == StockLotStatus.DRAFT and stock_lot.farmer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to view the quality certificate for this draft stock lot",
+        )
+
+    rel_path = stock_lot.quality_cert_url.lstrip("/")
+    abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../", rel_path))
+    if not os.path.exists(abs_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certificate file does not exist on server",
+        )
+
+    filename = stock_lot.quality_cert_filename or f"quality_cert_{stock_id}.pdf"
+    ext = filename.split(".")[-1].lower() if "." in filename else ""
+    media_type = "application/pdf"
+    if ext in ["jpg", "jpeg"]:
+        media_type = "image/jpeg"
+    elif ext == "png":
+        media_type = "image/png"
+
+    return FileResponse(
+        abs_path,
+        media_type=media_type,
+        filename=filename,
+        headers={
+            "Content-Disposition": f"inline; filename=\"{filename}\"",
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        }
+    )
+

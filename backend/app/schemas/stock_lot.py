@@ -43,6 +43,9 @@ class StockLotResponse(BaseModel):
     actual_harvest_date: date
     quality_grade: Optional[str] = None
     asking_price_per_quintal: Optional[float] = None
+    quality_cert_filename: Optional[str] = None
+    quality_cert_url: Optional[str] = None
+    quality_cert_uploaded_at: Optional[datetime] = None
     status: StockLotStatus
     created_at: datetime
     updated_at: datetime
@@ -66,6 +69,9 @@ class StockLotMarketplaceView(BaseModel):
     actual_harvest_date: date
     quality_grade: Optional[str] = None
     asking_price_per_quintal: Optional[float] = None
+    quality_cert_filename: Optional[str] = None
+    quality_cert_url: Optional[str] = None
+    quality_cert_uploaded_at: Optional[datetime] = None
     district: Optional[str] = None
     state: Optional[str] = None
     status: StockLotStatus

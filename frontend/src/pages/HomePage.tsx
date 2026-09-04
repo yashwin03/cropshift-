@@ -9,6 +9,7 @@ import type { FarmDetails } from '../mocks/fixtures';
 import type { RecommendationResponse } from '../types/api';
 import PlanCropModal from '../components/farmer/PlanCropModal';
 import FarmPlot3D from '../components/3d/FarmPlot3D';
+
 import {
   IconPlant,
   IconMapPin,
@@ -125,21 +126,15 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* 1. HERO HEADER BANNER */}
+      {/* 1. WELCOME BACK HEADER BANNER */}
       <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 text-white p-6 sm:p-8 rounded-3xl border border-amber-500/30 shadow-2xl space-y-4">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 text-xs font-black px-3.5 py-1 rounded-full border border-amber-500/30">
-              <IconSparkles size={14} className="text-amber-400" />
-              <span>Namaste, {farm?.farmer_name || 'Rajesh'}!</span>
-              <span className="text-amber-500/60">&bull;</span>
-              <span>CROPShift AI Decision System</span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
-              Oilseed Shift & Farmer Platform
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              WELCOME BACK{farm?.farmer_name ? `, ${farm.farmer_name.toUpperCase()}` : ''}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Analyze soil, water, and economics to switch to high-value oilseeds like Groundnut, Sesame, and Sunflower.
+            <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+              Agricultural Planning, Marketplace & Peer Farmer Network
             </p>
           </div>
 
@@ -160,13 +155,6 @@ export default function HomePage() {
               <IconPlant size={16} />
               <span>Start Crop Simulator</span>
             </Button>
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className="px-3 py-2 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 text-xs text-slate-300 font-bold rounded-xl"
-            >
-              Load Golden Demo Data
-            </button>
             {farm && (
               <button
                 type="button"
@@ -338,7 +326,31 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* MY CROPS OVERVIEW SUMMARY */}
+      <div className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-slate-800 shadow-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400">
+            <IconPlant size={24} />
+          </div>
+          <div>
+            <h3 className="text-base font-black text-white">Authoritative Crop Cultivation Records</h3>
+            <p className="text-xs text-slate-400">View and manage your active growing crops, sowing dates, and harvest records</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/analyze')}
+          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+        >
+          <span>Open My Farm Profile</span>
+          <IconArrowRight size={14} />
+        </button>
+      </div>
+
+
+
       {/* QUICK ACCESS ACTION TILES */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link to="/bidding" className="p-5 bg-slate-900/90 hover:bg-slate-800/90 rounded-2xl border border-slate-800 text-left transition-all flex flex-col justify-between space-y-3 group">
           <div className="p-3 bg-amber-950/60 rounded-xl border border-amber-500/30 w-fit text-amber-400 group-hover:scale-110 transition-transform">

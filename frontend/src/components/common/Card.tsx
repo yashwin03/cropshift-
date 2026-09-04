@@ -19,8 +19,13 @@ export default function Card({
   ...props
 }: CardProps & React.HTMLAttributes<HTMLDivElement>) {
   const HeaderComponent = headerTag;
+  const hasBg = /\bbg-/.test(className);
+  const hasBorder = /\bborder-/.test(className);
+  const bgClass = hasBg ? '' : 'bg-white';
+  const borderClass = hasBorder ? '' : 'border border-gray-200';
+
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`} {...props}>
+    <div className={`${bgClass} ${borderClass} rounded-xl shadow-sm overflow-hidden ${className}`} {...props}>
       {(title || subtitle) && (
         <div className="px-6 py-4 border-b border-gray-200">
           {title && <HeaderComponent className="text-lg font-bold text-gray-900 leading-tight">{title}</HeaderComponent>}

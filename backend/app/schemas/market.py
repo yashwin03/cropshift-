@@ -13,3 +13,7 @@ class MarketResponse(BaseModel):
     market_score: int
     data_status: str
     data_source: str
+    price_date: Optional[str] = None
+    min_target_price: Optional[float] = None
+    max_target_price: Optional[float] = None
+

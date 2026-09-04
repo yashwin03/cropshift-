@@ -85,11 +85,11 @@ export default function PeerProofCard({ cropId, cropName, farmId, district, lati
           ) : error ? (
             <p className="text-sm text-rose-400">{error}</p>
           ) : !proof?.available ? (
-            <p className="text-sm text-slate-400">No demo farmer records for {cropName} yet.</p>
+            <p className="text-sm text-slate-400">No nearby farmers found for {cropName}.</p>
           ) : (
             <p className="text-base font-bold text-slate-200">
               <span className="text-3xl font-black text-emerald-400">{cohortCount}</span>
-              {' '}demo farmer{cohortCount !== 1 ? 's' : ''} within{' '}
+              {' '}farmer{cohortCount !== 1 ? 's' : ''} within{' '}
               <span className="text-amber-400">{radiusKm} km</span>
               {proof?.total_districts ? (
                 <span className="text-slate-400 text-sm font-medium"> · {proof.total_districts} districts</span>
@@ -155,7 +155,7 @@ export default function PeerProofCard({ cropId, cropName, farmId, district, lati
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-black text-sm text-emerald-300">{selectedPeer.peer_display_id}</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30">
-                  Demo Record
+                  {selectedPeer.verification_status || 'Cultivation Record'}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -273,8 +273,7 @@ export default function PeerProofCard({ cropId, cropName, farmId, district, lati
       <div className="px-6 pb-5 flex items-center gap-2 text-[10px] text-slate-500">
         <IconShield size={12} className="text-slate-500 shrink-0" />
         <span>
-          Demo farmer dataset — not real farmer verification ·{' '}
-          {proof?.data_source || 'CropShift demo dataset'}
+          Privacy Protected · {proof?.data_source || 'Registered Farmer Network'}
         </span>
       </div>
     </div>

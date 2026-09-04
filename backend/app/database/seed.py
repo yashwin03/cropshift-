@@ -118,61 +118,93 @@ FARMS = [
 ]
 
 CROP_ECONOMICS = [
-    (1,  1, "Tumkur",  20.0, "Quintal / acre", 18000.0, 2550.0, "STATIC",    "Agmarknet / ICAR snapshot"),
-    (2,  1, "Haveri",  22.0, "Quintal / acre", 18500.0, 2600.0, "STATIC",    "Agmarknet / ICAR snapshot"),
-    (3,  2, "Tumkur",  10.0, "Quintal / acre", 12000.0, 5400.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (4,  2, "Dharwad", 10.5, "Quintal / acre", 12200.0, 5500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (5,  3, "Dharwad", 8.0,  "Quintal / acre", 10000.0, 4900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (6,  3, "Haveri",  8.5,  "Quintal / acre", 10200.0, 5000.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (7,  4, "Haveri",  8.0,  "Quintal / acre", 11000.0, 4750.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (8,  4, "Dharwad", 8.5,  "Quintal / acre", 11200.0, 4800.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (9,  5, "Dharwad", 6.0,  "Quintal / acre", 8000.0,  5150.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (10, 5, "Tumkur",  6.5,  "Quintal / acre", 8200.0,  5200.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (11, 6, "Tumkur",  4.0,  "Quintal / acre", 7000.0,  6900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (12, 6, "Dharwad", 4.5,  "Quintal / acre", 7200.0,  7000.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (13, 7, "Haveri",  25.0, "Quintal / acre", 15000.0, 1550.0, "STATIC",    "Agmarknet / ICAR snapshot"),
-    (14, 7, "Tumkur",  24.0, "Quintal / acre", 14800.0, 1500.0, "STATIC",    "Agmarknet / ICAR snapshot"),
-    (15, 8, "Tumkur",  7.0,  "Quintal / acre", 9000.0,  5700.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (16, 8, "Dharwad", 7.5,  "Quintal / acre", 9200.0,  5800.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (17, 9, "Tumkur",  4.5,  "Quintal / acre", 6500.0,  6300.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (18, 9, "Haveri",  5.0,  "Quintal / acre", 6700.0,  6400.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (19, 10, "Dharwad", 12.0, "Quintal / acre", 11000.0, 5900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (20, 10, "Tumkur",  12.5, "Quintal / acre", 11200.0, 6000.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (21, 11, "Haveri",  5.5,  "Quintal / acre", 7500.0,  5500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (22, 11, "Dharwad", 6.0,  "Quintal / acre", 7700.0,  5600.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (23, 12, "Tumkur",  4.2,  "Quintal / acre", 7200.0,  7600.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
-    (24, 12, "Dharwad", 4.6,  "Quintal / acre", 7400.0,  7700.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    # (id, crop_id, region, expected_yield_per_acre, yield_unit, production_cost_per_acre, expected_price_per_unit, status, source)
+    (1,  1, "Tumkur",     20.0, "Quintal / acre", 18000.0, 2550.0, "STATIC",    "Agmarknet / ICAR snapshot"),
+    (2,  1, "Haveri",     22.0, "Quintal / acre", 18500.0, 2600.0, "STATIC",    "Agmarknet / ICAR snapshot"),
+    (3,  2, "Tumkur",      9.5, "Quintal / acre", 13000.0, 5600.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (4,  2, "Dharwad",    10.0, "Quintal / acre", 13200.0, 5700.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (5,  3, "Dharwad",     9.0, "Quintal / acre", 11000.0, 5400.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (6,  3, "Haveri",      9.5, "Quintal / acre", 11200.0, 5500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (7,  4, "Haveri",      8.5, "Quintal / acre", 11500.0, 4850.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (8,  4, "Dharwad",     8.8, "Quintal / acre", 11800.0, 4900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (9,  5, "Dharwad",     7.2, "Quintal / acre",  8500.0, 5450.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (10, 5, "Tumkur",      7.5, "Quintal / acre",  8700.0, 5500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (11, 6, "Tumkur",      5.2, "Quintal / acre",  7500.0, 7400.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (12, 6, "Dharwad",     5.5, "Quintal / acre",  7700.0, 7500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (13, 7, "Haveri",     25.0, "Quintal / acre", 15000.0, 1550.0, "STATIC",    "Agmarknet / ICAR snapshot"),
+    (14, 7, "Tumkur",     24.0, "Quintal / acre", 14800.0, 1500.0, "STATIC",    "Agmarknet / ICAR snapshot"),
+    (15, 8, "Tumkur",      7.8, "Quintal / acre",  9200.0, 5800.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (16, 8, "Dharwad",     8.0, "Quintal / acre",  9400.0, 5900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (17, 9, "Tumkur",      5.0, "Quintal / acre",  6800.0, 6500.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (18, 9, "Haveri",      5.3, "Quintal / acre",  7000.0, 6600.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (19, 10, "Dharwad",    9.8, "Quintal / acre", 11500.0, 5850.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (20, 10, "Tumkur",    10.0, "Quintal / acre", 11800.0, 5900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (21, 11, "Haveri",     6.0, "Quintal / acre",  7800.0, 5600.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (22, 11, "Dharwad",    6.2, "Quintal / acre",  8000.0, 5700.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (23, 12, "Tumkur",     4.8, "Quintal / acre",  7600.0, 7800.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
+    (24, 12, "Dharwad",    5.0, "Quintal / acre",  7800.0, 7900.0, "ESTIMATED", "Agmarknet / ICAR snapshot"),
 ]
 
 CROP_SUITABILITIES = [
-    (1,  1, "Tumkur",  "red laterite",  "HIGH",   75.0, "Suitable with irrigation"),
-    (2,  1, "Haveri",  "black cotton",  "HIGH",   80.0, "Good canal irrigation"),
-    (3,  2, "Tumkur",  "red laterite",  "MEDIUM", 87.0, "Excellent fit"),
-    (4,  2, "Dharwad", "red laterite",  "MEDIUM", 85.0, "Good oilseed region"),
-    (5,  3, "Dharwad", "black cotton",  "MEDIUM", 82.0, "Rabi season suitable"),
-    (6,  3, "Haveri",  "black cotton",  "MEDIUM", 79.0, "Good yield potential"),
-    (7,  4, "Haveri",  "black cotton",  "MEDIUM", 80.0, "Kharif soybean belt"),
-    (8,  4, "Dharwad", "red laterite",  "MEDIUM", 76.0, "Moderate suitability"),
-    (9,  5, "Dharwad", "red laterite",  "LOW",    78.0, "Rabi mustard ok"),
-    (10, 5, "Tumkur",  "red laterite",  "LOW",    72.0, "Dryland suitable"),
-    (11, 6, "Tumkur",  "red laterite",  "LOW",    74.0, "Drought tolerant"),
-    (12, 6, "Dharwad", "red laterite",  "LOW",    71.0, "Suitable"),
-    (13, 7, "Haveri",  "black cotton",  "MEDIUM", 83.0, "Good maize area"),
-    (14, 7, "Tumkur",  "red laterite",  "MEDIUM", 77.0, "Moderate yield"),
-    (15, 8, "Tumkur",  "red laterite",  "LOW",    76.0, "Rabi suitable"),
-    (16, 8, "Dharwad", "red laterite",  "LOW",    74.0, "Suitable"),
-    (17, 9, "Tumkur",  "red laterite",  "LOW",    72.0, "Kharif suitable"),
-    (18, 9, "Haveri",  "black cotton",  "LOW",    75.0, "Suitable"),
-    (19, 10, "Dharwad", "red laterite", "MEDIUM", 80.0, "Deep soil suitable"),
-    (20, 10, "Tumkur",  "red laterite", "MEDIUM", 78.0, "Good yield"),
-    (21, 11, "Haveri",  "black cotton", "LOW",    73.0, "Rabi linseed"),
-    (22, 11, "Dharwad", "red laterite", "LOW",    71.0, "Moderate fit"),
-    (23, 12, "Tumkur",  "red laterite", "LOW",    77.0, "High value crop"),
-    (24, 12, "Dharwad", "red laterite", "LOW",    75.0, "Suitable"),
+    # (id, crop_id, region, soil_type, water_req, base_score, notes)
+    (1,  1, "Tumkur",     "red laterite",  "HIGH",   75.0, "Suitable with irrigation"),
+    (2,  1, "Haveri",      "black cotton",  "HIGH",   80.0, "Good canal irrigation"),
+    
+    # Groundnut (Crop 2)
+    (3,  2, "Tumkur",     "red laterite",  "MEDIUM", 87.0, "Excellent red soil fit"),
+    (4,  2, "Dharwad",    "red laterite",  "MEDIUM", 85.0, "Good oilseed region"),
+    (5,  2, "Haveri",     "red laterite",  "MEDIUM", 84.0, "High potential"),
+    (6,  2, "Belagavi",   "red laterite",  "MEDIUM", 82.0, "Suitable"),
+
+    # Sunflower (Crop 3)
+    (7,  3, "Dharwad",    "black cotton",  "MEDIUM", 88.0, "Rabi season black soil prime fit"),
+    (8,  3, "Haveri",     "black cotton",  "MEDIUM", 86.0, "Excellent black soil yield"),
+    (9,  3, "Belagavi",   "black cotton",  "MEDIUM", 85.0, "Good yield potential"),
+    (10, 3, "Tumkur",     "red laterite",  "MEDIUM", 78.0, "Moderate fit"),
+
+    # Soybean (Crop 4)
+    (11, 4, "Haveri",     "black cotton",  "MEDIUM", 87.0, "Kharif soybean belt"),
+    (12, 4, "Dharwad",    "black cotton",  "MEDIUM", 85.0, "Black soil optimal"),
+    (13, 4, "Belagavi",   "black cotton",  "MEDIUM", 84.0, "Good Kharif fit"),
+
+    # Mustard (Crop 5) — Dryland low-water fit
+    (14, 5, "Dharwad",    "red laterite",  "LOW",    86.0, "Excellent low water dryland fit"),
+    (15, 5, "Tumkur",     "red laterite",  "LOW",    85.0, "Top dryland crop"),
+    (16, 5, "Haveri",     "red laterite",  "LOW",    82.0, "Suitable for dry season"),
+
+    # Sesame (Crop 6) — Low water / high value
+    (17, 6, "Tumkur",     "red laterite",  "LOW",    88.0, "Drought tolerant high value"),
+    (18, 6, "Dharwad",    "red laterite",  "LOW",    84.0, "Low water high market value"),
+    (19, 6, "Haveri",     "red laterite",  "LOW",    82.0, "Summer/Kharif suitable"),
+
+    # Maize (Crop 7)
+    (20, 7, "Haveri",     "black cotton",  "MEDIUM", 83.0, "Good maize area"),
+    (21, 7, "Tumkur",     "red laterite",  "MEDIUM", 77.0, "Moderate yield"),
+
+    # Safflower (Crop 8) — Rabi low water
+    (22, 8, "Tumkur",     "black cotton",  "LOW",    87.0, "Rabi drought resistant prime fit"),
+    (23, 8, "Dharwad",    "black cotton",  "LOW",    85.0, "Deep black soil rabi fit"),
+
+    # Niger (Crop 9)
+    (24, 9, "Tumkur",     "red laterite",  "LOW",    81.0, "Kharif dryland crop"),
+    (25, 9, "Haveri",     "black cotton",  "LOW",    80.0, "Suitable"),
+
+    # Castor (Crop 10)
+    (26, 10, "Dharwad",   "red laterite",  "MEDIUM", 81.0, "Deep soil suitable"),
+    (27, 10, "Tumkur",    "red laterite",  "MEDIUM", 80.0, "Good yield"),
+    (28, 10, "Haveri",    "red laterite",  "MEDIUM", 79.0, "Moderate fit"),
+
+    # Linseed (Crop 11)
+    (29, 11, "Haveri",    "black cotton",  "LOW",    82.0, "Rabi linseed fit"),
+    (30, 11, "Dharwad",   "red laterite",  "LOW",    80.0, "Moderate fit"),
+
+    # Sesame Black (Crop 12)
+    (31, 12, "Tumkur",    "red laterite",  "LOW",    86.0, "High value specialty oilseed"),
+    (32, 12, "Dharwad",   "red laterite",  "LOW",    83.0, "Suitable for dryland"),
 ]
 
 # ---------------------------------------------------------------------------
-# Peer Proofs (DEMO DATASET — minimum 6-8 farmers per oilseed crop with distinct, non-overlapping coordinates)
+# Peer Proofs (DEMO DATASET — Dense, accurate spatial coverage per crop)
 # ---------------------------------------------------------------------------
 
 _PEER_SOURCE = "CropShift demo dataset"
@@ -181,79 +213,88 @@ _PEER_VERIF  = "Demo data — not real farmer verification"
 # Base coordinates per district for geographic distribution
 DISTRICT_LOCS = {
     "Dharwad": (15.4589, 75.0078),
-    "Haveri": (14.7960, 75.4000),
-    "Tumkur": (13.3409, 77.1025),
-    "Belagavi": (15.8497, 74.5085),
-    "Shivamogga": (13.9299, 75.5680),
-    "Hassan": (13.0033, 76.1004),
-    "Mysuru": (12.2958, 76.6394),
-    "Davanagere": (14.4644, 75.9220),
-    "Chitradurga": (14.2251, 76.3980),
-    "Mandya": (12.5218, 76.8951),
+    "Haveri": (14.7960, 75.4000),       # ~80 km from Dharwad
+    "Belagavi": (15.8497, 74.5085),     # ~70 km from Dharwad
+    "Gadag": (15.4290, 75.6260),        # ~67 km from Dharwad
+    "Tumkur": (13.3409, 77.1025),       # ~300 km
+    "Davanagere": (14.4644, 75.9220),   # ~150 km
+    "Shivamogga": (13.9299, 75.5680),   # ~190 km
+    "Chitradurga": (14.2251, 76.3980),  # ~210 km
+    "Mysuru": (12.2958, 76.6394),       # ~390 km
 }
 
 PEER_PROOFS = []
 
 def _gen_peers():
     pid = 1
-    # Oilseed crops: 2 (Groundnut), 3 (Sunflower), 4 (Soybean), 5 (Mustard), 6 (Sesame), 8 (Safflower), 9 (Niger), 10 (Castor), 11 (Linseed), 12 (Sesame Black)
+    # Oilseed crops specs: (crop_id, crop_name, base_yield, base_price, season, stage)
     oilseed_specs = [
-        (2, "Groundnut", 9.5, 5900, "Kharif 2025", "Pod Formation"),
-        (3, "Sunflower", 8.2, 5250, "Rabi 2025", "Head Development"),
-        (4, "Soybean", 8.4, 4900, "Kharif 2025", "Pod Filling"),
-        (5, "Mustard", 6.2, 5400, "Rabi 2025", "Pod Development"),
-        (6, "Sesame", 4.3, 7250, "Kharif 2025", "Capsule Formation"),
-        (8, "Safflower", 7.1, 5650, "Rabi 2025", "Maturity"),
-        (9, "Niger", 4.8, 6350, "Kharif 2025", "Flowering"),
-        (10, "Castor", 12.5, 5950, "Kharif 2025", "Spike Development"),
-        (11, "Linseed", 5.8, 5550, "Rabi 2025", "Pod Maturity"),
-        (12, "Sesame (Black)", 4.5, 7650, "Kharif 2025", "Capsule Maturity"),
+        (2, "Groundnut", 9.5, 5700, "Kharif 2025", "Pod Formation"),
+        (3, "Sunflower", 8.8, 5450, "Rabi 2025", "Head Development"),
+        (4, "Soybean", 8.5, 4900, "Kharif 2025", "Pod Filling"),
+        (5, "Mustard", 7.2, 5450, "Rabi 2025", "Pod Development"),
+        (6, "Sesame", 5.2, 7450, "Kharif 2025", "Capsule Formation"),
+        (8, "Safflower", 7.8, 5800, "Rabi 2025", "Maturity"),
+        (9, "Niger", 5.0, 6500, "Kharif 2025", "Flowering"),
+        (10, "Castor", 9.8, 5850, "Kharif 2025", "Spike Development"),
+        (11, "Linseed", 6.0, 5600, "Rabi 2025", "Pod Maturity"),
+        (12, "Sesame (Black)", 4.8, 7850, "Kharif 2025", "Capsule Maturity"),
     ]
 
-    districts = list(DISTRICT_LOCS.keys())
-
     for crop_id, crop_name, base_yield, base_price, season, stage in oilseed_specs:
-        # Create 7 distinct demo farmers per crop distributed across Karnataka
-        for i in range(7):
-            dist_name = districts[i % len(districts)]
-            base_lat, base_lon = DISTRICT_LOCS[dist_name]
-            
-            # Offset lat/lon slightly so markers do NOT overlap
-            offset_lat = base_lat + ((i * 0.035) - 0.1)
-            offset_lon = base_lon + (((i % 3) * 0.04) - 0.06)
+        # Generate 12 records per crop:
+        # - 4 records in Dharwad hub (< 40 km radius)
+        # - 3 records in Haveri hub (~70-90 km radius)
+        # - 3 records in Belagavi / Gadag hubs (~65-85 km radius)
+        # - 2 records in Tumkur hub (~300 km)
+        clusters = [
+            ("Dharwad", 15.4589, 75.0078, 4),
+            ("Haveri", 14.7960, 75.4000, 3),
+            ("Belagavi", 15.8497, 74.5085, 2),
+            ("Gadag", 15.4290, 75.6260, 1),
+            ("Tumkur", 13.3409, 77.1025, 2),
+        ]
 
-            acres = round(1.5 + (i * 0.5), 1)
-            y_val = round(base_yield + ((i * 0.2) - 0.4), 1)
-            p_val = round(base_price + ((i * 50) - 100), 1)
-            cost = round(acres * 4000 + 3000, 1)
-            net_val = round(y_val * p_val - cost, 1)
+        for dist_name, base_lat, base_lon, count in clusters:
+            for i in range(count):
+                # Tight offsets within ~10-30 km of district center
+                offset_lat = base_lat + ((i * 0.08) - 0.04)
+                offset_lon = base_lon + (((i % 2) * 0.09) - 0.045)
 
-            PEER_PROOFS.append(dict(
-                id=pid,
-                crop_id=crop_id,
-                season=season,
-                cultivated_area_acres=acres,
-                yield_quintals_per_acre=y_val,
-                selling_price_per_quintal=p_val,
-                cultivation_cost_per_acre=cost,
-                net_realization_per_acre=net_val,
-                district=dist_name,
-                state="Karnataka",
-                latitude=offset_lat,
-                longitude=offset_lon,
-                crop_stage=stage,
-                expected_harvest="Oct 2025" if "Kharif" in season else "Feb 2026",
-                soil_type="Red Laterite" if i % 2 == 0 else "Black Cotton",
-                water_source="Borewell" if i % 2 == 0 else "Canal Irrigation",
-                source_type=_PEER_SOURCE,
-                verification_status=_PEER_VERIF,
-                peer_visibility="CONTACTABLE" if i == 0 else "VERIFIED" if i == 1 else "ANONYMOUS",
-                contactable=(i == 0),
-                farmer_display_name=f"CropShift Demo Farmer #{pid}" if i != 0 else f"Demonstration Farmer #{pid} ({dist_name})",
-                contact_phone="98765000" + str(pid).zfill(2) if i == 0 else None,
-                contact_email=f"demo_farmer_{pid}@cropshift.com" if i == 0 else None,
-            ))
-            pid += 1
+                acres = round(1.5 + (i * 0.5), 1)
+                y_val = round(base_yield + ((i * 0.2) - 0.3), 1)
+                p_val = round(base_price + ((i * 40) - 60), 1)
+                cost = round(acres * 3800 + 2500, 1)
+                net_val = round(y_val * p_val - cost, 1)
+
+                is_contactable = (i == 0 and dist_name == "Dharwad")
+
+                PEER_PROOFS.append(dict(
+                    id=pid,
+                    crop_id=crop_id,
+                    season=season,
+                    cultivated_area_acres=acres,
+                    yield_quintals_per_acre=y_val,
+                    selling_price_per_quintal=p_val,
+                    cultivation_cost_per_acre=cost,
+                    net_realization_per_acre=net_val,
+                    district=dist_name,
+                    state="Karnataka",
+                    latitude=round(offset_lat, 4),
+                    longitude=round(offset_lon, 4),
+                    crop_stage=stage,
+                    expected_harvest="Oct 2025" if "Kharif" in season else "Feb 2026",
+                    soil_type="Red Laterite" if i % 2 == 0 else "Black Cotton",
+                    water_source="Borewell" if i % 2 == 0 else "Canal Irrigation",
+                    source_type=_PEER_SOURCE,
+                    verification_status=_PEER_VERIF,
+                    peer_visibility="CONTACTABLE" if is_contactable else "VERIFIED" if i == 1 else "ANONYMOUS",
+                    contactable=is_contactable,
+                    farmer_display_name=f"CropShift Demo Farmer #{pid} ({dist_name})" if not is_contactable else f"Demonstration Farmer #{pid} ({dist_name})",
+                    contact_phone="98765000" + str(pid).zfill(2) if is_contactable else None,
+                    contact_email=f"demo_farmer_{pid}@cropshift.com" if is_contactable else None,
+                ))
+                pid += 1
 
 _gen_peers()
 
@@ -261,7 +302,7 @@ MARKETS = [
     dict(id=1, name="Tumkur APMC",          district="Tumkur",     state="Karnataka", location=_point(77.1000, 13.3400), market_type="APMC"),
     dict(id=2, name="Haveri APMC",          district="Haveri",     state="Karnataka", location=_point(75.3980, 14.7950), market_type="APMC"),
     dict(id=3, name="Dharwad APMC",         district="Dharwad",    state="Karnataka", location=_point(75.0100, 15.4600), market_type="APMC"),
-    dict(id=4, name="Bengaluru APMC",       district="Bengaluru",  state="Karnataka", location=_point(77.5946, 12.9716), market_type="APMC"),
+    dict(id=4, name="Bengaluru APMC Yeshwanthpur", district="Bengaluru", state="Karnataka", location=_point(77.5946, 12.9716), market_type="APMC"),
     dict(id=5, name="Shivamogga APMC",      district="Shivamogga", state="Karnataka", location=_point(75.5680, 13.9299), market_type="APMC"),
     dict(id=6, name="Bhadravathi Sub-Yard", district="Shivamogga", state="Karnataka", location=_point(75.7140, 13.8430), market_type="SUB_YARD"),
     dict(id=7, name="Sagar APMC",           district="Shivamogga", state="Karnataka", location=_point(75.0310, 14.1670), market_type="APMC"),
@@ -273,6 +314,19 @@ MARKETS = [
     dict(id=13, name="Davanagere APMC",     district="Davanagere", state="Karnataka", location=_point(75.9220, 14.4640), market_type="APMC"),
     dict(id=14, name="Belagavi APMC",       district="Belagavi",   state="Karnataka", location=_point(74.5080, 15.8490), market_type="APMC"),
     dict(id=15, name="Ballari APMC",        district="Ballari",    state="Karnataka", location=_point(76.9210, 15.1390), market_type="APMC"),
+    dict(id=16, name="Chitradurga APMC",    district="Chitradurga",state="Karnataka", location=_point(76.3980, 14.2250), market_type="APMC"),
+    dict(id=17, name="Kalaburagi APMC",     district="Kalaburagi", state="Karnataka", location=_point(76.8343, 17.3297), market_type="APMC"),
+    dict(id=18, name="Vijayapura APMC",     district="Vijayapura", state="Karnataka", location=_point(75.7100, 16.8302), market_type="APMC"),
+    dict(id=19, name="Bagalkot APMC",       district="Bagalkot",   state="Karnataka", location=_point(75.6960, 16.1850), market_type="APMC"),
+    dict(id=20, name="Mysuru APMC Bandipalya", district="Mysuru", state="Karnataka", location=_point(76.6394, 12.2958), market_type="APMC"),
+    dict(id=21, name="Mandya APMC",          district="Mandya",     state="Karnataka", location=_point(76.8951, 12.5218), market_type="APMC"),
+    dict(id=22, name="Hassan APMC",          district="Hassan",     state="Karnataka", location=_point(76.1004, 13.0033), market_type="APMC"),
+    dict(id=23, name="Chikmagalur APMC",    district="Chikmagalur",state="Karnataka", location=_point(75.7720, 13.3161), market_type="APMC"),
+    dict(id=24, name="Kolar APMC",           district="Kolar",      state="Karnataka", location=_point(78.1290, 13.1360), market_type="APMC"),
+    dict(id=25, name="Chintamani APMC",      district="Chikkaballapur", state="Karnataka", location=_point(78.0600, 13.4000), market_type="APMC"),
+    dict(id=26, name="Ranebennur APMC",      district="Haveri",     state="Karnataka", location=_point(75.6210, 14.6230), market_type="APMC"),
+    dict(id=27, name="Laxmeshwar Sub-Yard",  district="Gadag",      state="Karnataka", location=_point(75.4740, 15.1260), market_type="SUB_YARD"),
+    dict(id=28, name="Gokak APMC",           district="Belagavi",   state="Karnataka", location=_point(74.8330, 16.1670), market_type="APMC"),
 ]
 
 _PRICE_DATE = datetime.date(2024, 10, 1)
@@ -303,6 +357,16 @@ MARKET_PRICES = [
     (23, 13, 4, 4950.0, "FALLING"),
     (24, 14, 4, 5020.0, "RISING"),
     (25, 15, 2, 6100.0, "STABLE"),
+    (26, 16, 2, 5950.0, "STABLE"),
+    (27, 17, 5, 5300.0, "RISING"),
+    (28, 18, 8, 5750.0, "RISING"),
+    (29, 19, 2, 6050.0, "STABLE"),
+    (30, 20, 2, 6250.0, "RISING"),
+    (31, 21, 3, 5050.0, "STABLE"),
+    (32, 22, 2, 6120.0, "STABLE"),
+    (33, 26, 2, 6080.0, "RISING"),
+    (34, 27, 6, 9600.0, "STABLE"),
+    (35, 28, 2, 6150.0, "RISING"),
 ]
 
 RISK_SCENARIOS = [

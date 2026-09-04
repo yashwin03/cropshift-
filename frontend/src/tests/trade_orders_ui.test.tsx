@@ -76,7 +76,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
   it('1. Buyer can navigate to My Trade Orders tab', async () => {
     renderWithAuth('buyer');
 
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     expect(tabBtn).toBeInTheDocument();
 
     fireEvent.click(tabBtn);
@@ -88,7 +88,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
   it('2. Display Trade Order card with correct price and quantity', async () => {
     renderWithAuth('buyer');
 
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     expect(await screen.findByText('Order #101')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
   it('3. Farmer can view Trade Orders tab', async () => {
     renderWithAuth('farmer');
 
-    const tabBtn = await screen.findByRole('button', { name: /Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     expect(tabBtn).toBeInTheDocument();
 
     fireEvent.click(tabBtn);
@@ -116,7 +116,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
     });
 
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     const fulfillBtn = await screen.findByRole('button', { name: /Mark Fulfilled/i });
@@ -127,7 +127,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
 
   it('5. Clicking Cancel Trade opens cancellation modal', async () => {
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     const cancelBtn = await screen.findByRole('button', { name: /Cancel Trade/i });
@@ -147,7 +147,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
     });
 
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     const cancelBtn = await screen.findByRole('button', { name: /Cancel Trade/i });
@@ -171,7 +171,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
     ]);
 
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     expect(await screen.findByText('Trade Fulfilled')).toBeInTheDocument();
@@ -189,7 +189,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
     ]);
 
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     expect(await screen.findByText('Cancelled')).toBeInTheDocument();
@@ -198,7 +198,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
 
   it('9. Renders non-binding disclaimer message banner on Trade Orders tab', async () => {
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     expect(await screen.findByText(/Non-Binding Marketplace Disclaimer:/i)).toBeInTheDocument();
@@ -206,7 +206,7 @@ describe('Phase 8B Trade Order UI Integration', () => {
 
   it('10. Renders Contact Sharing Card inside Trade Order card', async () => {
     renderWithAuth('buyer');
-    const tabBtn = await screen.findByRole('button', { name: /My Trade Orders/i });
+    const tabBtn = await screen.findByRole('button', { name: /My Deals|Deals/i });
     fireEvent.click(tabBtn);
 
     expect(await screen.findByText(/Mutual Contact Sharing/i)).toBeInTheDocument();

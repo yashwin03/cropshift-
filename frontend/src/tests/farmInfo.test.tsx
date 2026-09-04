@@ -174,7 +174,7 @@ describe('FarmInfoPage — Step 3: Farm Conditions', () => {
 
   it('optional soil type and location fields can be skipped', () => {
     goToStep3();
-    fireEvent.click(screen.getByRole('button', { name: /💧 available/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^available$/i }));
     // Don't fill optional fields — go straight to review
     fireEvent.click(screen.getByRole('button', { name: /review/i }));
     expect(screen.getByText('Review your information')).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe('FarmInfoPage — Step 4: Review & Submit', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
     // Step 3
-    fireEvent.click(screen.getByRole('button', { name: /💧 available/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^available$/i }));
     fireEvent.click(screen.getByRole('button', { name: /review/i }));
   };
 
@@ -266,7 +266,7 @@ describe('FarmInfoPage — Step 4: Review & Submit', () => {
     fireEvent.click(screen.getByText(/Next →/i));
 
     // Step 3
-    fireEvent.click(screen.getByText(/💧 Available/i));
+    fireEvent.click(screen.getByText(/^Available$/i));
     fireEvent.click(screen.getByText(/Review →/i));
 
     // Step 4
@@ -290,7 +290,7 @@ describe('FarmInfoPage — Step 4: Review & Submit', () => {
     fireEvent.click(screen.getByText(/Next →/i));
 
     // Step 3
-    fireEvent.click(screen.getByText(/💧 Available/i));
+    fireEvent.click(screen.getByText(/^Available$/i));
     
     // Check manual inputs
     fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: '12.34' } });

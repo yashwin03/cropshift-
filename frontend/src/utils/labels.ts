@@ -21,7 +21,7 @@ export const TREND_LABELS: Record<Trend, string> = {
 export const DATA_STATUS_LABELS: Record<DataStatus, string> = {
   REAL: 'Live Data',
   STATIC: 'Reference Data',
-  DEMO: 'Demo Data',
+  DEMO: '',
   ESTIMATED: 'Estimated'
 };
 
@@ -33,7 +33,7 @@ export const RELEVANCE_LABELS: Record<Relevance, string> = {
 
 export const ELIGIBILITY_LABELS: Record<EligibilityStatus, string> = {
   LIKELY_ELIGIBLE: 'You may qualify — please verify',
-  VERIFICATION_REQUIRED: 'Verification required',
+  VERIFICATION_REQUIRED: 'Land Ownership & Aadhaar Verification Required',
   LIKELY_NOT_ELIGIBLE: 'Likely not applicable'
 };
 

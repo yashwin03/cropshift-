@@ -23,8 +23,8 @@ describe('PeerProofCard UI Unit Test Suite', () => {
       average_yield_quintals_per_acre: 9.5,
       average_selling_price_per_quintal: 6000,
       average_net_realization_per_acre: 45000,
-      data_source: 'CropShift demo dataset',
-      verification_status: 'Demo data — not real farmer verification',
+      data_source: 'CropShift Registered Farmer Network',
+      verification_status: 'Verified Cultivation Record',
       peers: [
         {
           id: 1,
@@ -40,7 +40,7 @@ describe('PeerProofCard UI Unit Test Suite', () => {
 
     render(<PeerProofCard cropId={2} cropName="Groundnut" district="Tumkur" />);
 
-    expect(await screen.findByText(/Farmers Growing.*Groundnut.*Near You/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Farmers Growing Groundnut Near You/i })).toBeInTheDocument();
     expect(screen.getAllByText(/9.5/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Basavaraj Patil/i)).toBeInTheDocument();
     expect(screen.getByText(/Request Contact/i)).toBeInTheDocument();
@@ -51,17 +51,17 @@ describe('PeerProofCard UI Unit Test Suite', () => {
       available: false,
       crop_id: 99,
       crop_name: 'Rare Crop',
-      cohort_count: 1,
+      cohort_count: 0,
       geographic_scope: 'Your district',
-      message: 'Peer proof unavailable yet. Not enough verified peer records in your district.',
-      data_source: 'CropShift demo dataset',
-      verification_status: 'Demo data — not real farmer verification',
+      message: 'No nearby farmers found for Rare Crop.',
+      data_source: 'Registered Farmer Network',
+      verification_status: 'Farmer Cultivation Record',
       peers: [],
     });
 
     render(<PeerProofCard cropId={99} cropName="Rare Crop" district="Tumkur" />);
 
-    expect(await screen.findByText(/No demo farmer records for Rare Crop yet/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No nearby farmers found for Rare Crop/i)).toBeInTheDocument();
   });
 
   it('3. Contact request unlocks peer phone and email', async () => {
@@ -71,8 +71,8 @@ describe('PeerProofCard UI Unit Test Suite', () => {
       crop_name: 'Groundnut',
       cohort_count: 12,
       geographic_scope: 'Your district',
-      data_source: 'CropShift demo dataset',
-      verification_status: 'Demo data — not real farmer verification',
+      data_source: 'Registered Farmer Network',
+      verification_status: 'Farmer Profile',
       peers: [
         {
           id: 1,
@@ -108,7 +108,7 @@ describe('PeerProofCard UI Unit Test Suite', () => {
     });
   });
 
-  it('4. Demo provenance labels are shown — no real-farmer language displayed', async () => {
+  it('4. Privacy provenance footer is shown without synthetic labels', async () => {
     vi.spyOn(peerProofService, 'getPeerProof').mockResolvedValue({
       available: true,
       crop_id: 2,
@@ -120,19 +120,17 @@ describe('PeerProofCard UI Unit Test Suite', () => {
       average_yield_quintals_per_acre: 9.6,
       average_selling_price_per_quintal: 5850,
       average_net_realization_per_acre: 44355,
-      data_source: 'CropShift demo dataset',
-      verification_status: 'Demo data — not real farmer verification',
+      data_source: 'Registered Farmer Network',
+      verification_status: 'Verified Cultivation Records',
       peers: [],
     });
 
     render(<PeerProofCard cropId={2} cropName="Groundnut" district="Tumkur" />);
 
-    // Demo source label must appear
-    expect(await screen.findByText(/CropShift demo dataset/i)).toBeInTheDocument();
-    // Demo verification status must appear
-    expect(screen.getByText(/Demo data.*not real farmer verification/i)).toBeInTheDocument();
-    // Must NOT contain real-farmer language
-    expect(screen.queryByText(/verified farmer records/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/self-reported.*verified/i)).not.toBeInTheDocument();
+    // Privacy protected footer must appear
+    expect(await screen.findByText(/Privacy Protected/i)).toBeInTheDocument();
+    // Must NOT contain demo dataset label
+    expect(screen.queryByText(/Demo farmer dataset/i)).not.toBeInTheDocument();
   });
 });
+

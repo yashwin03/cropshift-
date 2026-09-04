@@ -41,6 +41,7 @@ def init_db() -> None:
             conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_farmer_id ON \"user\" (farmer_id);"))
             conn.execute(text("ALTER TABLE contact_sharing ADD COLUMN IF NOT EXISTS stock_bid_id INTEGER;"))
             conn.execute(text("ALTER TABLE contact_sharing ALTER COLUMN bid_id DROP NOT NULL;"))
+            conn.execute(text("ALTER TABLE future_crop_lot ADD COLUMN IF NOT EXISTS cultivation_record_id INTEGER;"))
             conn.commit()
         except Exception as e:
             logger.warning(f"Note on schema column migration: {e}")

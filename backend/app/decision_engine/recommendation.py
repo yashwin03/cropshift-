@@ -19,6 +19,19 @@ from app.decision_engine.risk import calculate_risk_score
 from app.decision_engine.safety_score import calculate_headline_safety_score
 from app.decision_engine.explainability import generate_explanations
 
+CROP_DURATIONS: Dict[int, str] = {
+    2: "105 - 120 days",   # Groundnut
+    3: "90 - 105 days",    # Sunflower
+    4: "90 - 110 days",    # Soybean
+    5: "100 - 115 days",   # Mustard
+    6: "80 - 95 days",     # Sesame
+    8: "110 - 125 days",   # Safflower
+    9: "95 - 105 days",    # Niger
+    10: "150 - 180 days",  # Castor
+    11: "100 - 115 days",  # Linseed
+    12: "85 - 95 days",    # Sesame (Black)
+}
+
 
 def evaluate_all_oilseeds(db: Session, farm_id: int) -> List[Dict[str, Any]]:
     """
@@ -146,6 +159,8 @@ def evaluate_all_oilseeds(db: Session, farm_id: int) -> List[Dict[str, Any]]:
         water_factor = next((f for f in suit_res.factors if f.name == "Water compatibility"), None)
         water_suitability = int(round(water_factor.value)) if water_factor else int(suit_res.score)
 
+        duration_str = CROP_DURATIONS.get(alt_crop["id"], "100 - 120 days")
+
         candidates_evaluated.append({
             "recommended_crop_id": alt_crop["id"],
             "crop_name": alt_crop["name"],
@@ -162,6 +177,8 @@ def evaluate_all_oilseeds(db: Session, farm_id: int) -> List[Dict[str, Any]]:
             "expected_profit": float(profit_res.estimated_profit),
             "current_crop_profit": float(profit_res.current_crop_profit),
             "profit_difference": float(profit_res.profit_difference),
+            "cultivation_duration": duration_str,
+            "accuracy_validation_note": "No statistically validated real-world accuracy percentage is currently established.",
             "reasons": reasons,
             "risks": risks
         })

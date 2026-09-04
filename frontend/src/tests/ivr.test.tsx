@@ -27,11 +27,10 @@ describe('IvrPage — Mobile Voice Advisory & Slide-to-Call Tests', () => {
 
     // Three capability cards
     expect(screen.getAllByText(/crop recommendation/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/get crop guidance through the ivr/i)).toBeInTheDocument();
+    expect(screen.getByText(/tailored oilseed recommendation/i)).toBeInTheDocument();
     expect(screen.getAllByText(/market prices/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/hear the predefined market-price information/i)).toBeInTheDocument();
+    expect(screen.getByText(/APMC modal/i)).toBeInTheDocument();
     expect(screen.getAllByText(/government schemes/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/hear available demo scheme information/i)).toBeInTheDocument();
 
 
 
@@ -64,15 +63,6 @@ describe('IvrPage — Mobile Voice Advisory & Slide-to-Call Tests', () => {
 
     expect(screen.getByRole('slider')).toBeInTheDocument();
   });
-
-  test('renders connectivity section explaining online vs offline capabilities', () => {
-    renderIvrPage();
-
-    const connectivitySection = screen.getByTestId('connectivity-info');
-    expect(connectivitySection).toBeInTheDocument();
-    expect(screen.getByText(/available without internet/i)).toBeInTheDocument();
-    expect(screen.getByText(/requires internet/i)).toBeInTheDocument();
-    expect(screen.getByText(/voice advisory by phone/i)).toBeInTheDocument();
-  });
 });
+
 

@@ -34,9 +34,9 @@ def _enrich_bid_response(db: Session, bid: Bid) -> BidResponse:
 def create_bid(
     payload: BidCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.BUYER)),
+    current_user: User = Depends(require_role(UserRole.BUYER, UserRole.FARMER)),
 ):
-    """Submit an indicative pre-sowing bid on an OPEN Future Crop Lot (BUYER role required)."""
+    """Submit an indicative pre-sowing bid on an OPEN Future Crop Lot."""
     # 1. Verify Future Crop Lot exists
     lot = db.query(FutureCropLot).filter(FutureCropLot.id == payload.future_crop_lot_id).first()
     if not lot:
@@ -52,34 +52,67 @@ def create_bid(
             detail=f"Cannot submit bid on future crop lot with status '{lot.status.value}'."
         )
 
-    # 3. Verify quantity rule: bid quantity <= expected lot quantity
+    # 4. Verify price & quantity rules
+    if payload.offered_price_per_quintal <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Offered price per quintal must be greater than 0."
+        )
+    if payload.quantity_quintals <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Quantity in quintals must be greater than 0."
+        )
     if payload.quantity_quintals > lot.expected_quantity_quintals:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Bidded quantity ({payload.quantity_quintals} Q) exceeds total planned lot yield ({lot.expected_quantity_quintals} Q)."
         )
 
-    # 4. Create Bid with derived buyer_id
-    bid = Bid(
-        future_crop_lot_id=payload.future_crop_lot_id,
-        buyer_id=current_user.id,
-        offered_price_per_quintal=payload.offered_price_per_quintal,
-        quantity_quintals=payload.quantity_quintals,
-        conditions=payload.conditions,
-        status=BidStatus.SUBMITTED,
+    # 5. Prevent duplicate pending bid by the same user on the same lot
+    existing_pending = (
+        db.query(Bid)
+        .filter(
+            Bid.future_crop_lot_id == payload.future_crop_lot_id,
+            Bid.buyer_id == current_user.id,
+            Bid.status == BidStatus.SUBMITTED,
+        )
+        .first()
     )
-    db.add(bid)
-    db.commit()
-    db.refresh(bid)
-    return _enrich_bid_response(db, bid)
+    if existing_pending:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have an active pending offer submitted for this opportunity."
+        )
+
+    # 6. Create Bid with derived buyer_id
+    try:
+        bid = Bid(
+            future_crop_lot_id=payload.future_crop_lot_id,
+            buyer_id=current_user.id,
+            offered_price_per_quintal=payload.offered_price_per_quintal,
+            quantity_quintals=payload.quantity_quintals,
+            conditions=payload.conditions,
+            status=BidStatus.SUBMITTED,
+        )
+        db.add(bid)
+        db.commit()
+        db.refresh(bid)
+        return _enrich_bid_response(db, bid)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record offer: {str(e)}"
+        )
 
 
 @router.get("/bids/me", response_model=List[BidResponse])
 def get_my_bids(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.BUYER)),
+    current_user: User = Depends(require_role(UserRole.BUYER, UserRole.FARMER)),
 ):
-    """List all indicative bids submitted by the current authenticated buyer."""
+    """List all indicative bids submitted by the current authenticated user."""
     bids = (
         db.query(Bid)
         .filter(Bid.buyer_id == current_user.id)
@@ -93,7 +126,7 @@ def get_my_bids(
 def get_bids_for_farmer_lot(
     lot_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.FARMER)),
+    current_user: User = Depends(require_role(UserRole.FARMER, UserRole.BUYER)),
 ):
     """List all bids submitted for a specific Future Crop Lot (Farmer Owner only)."""
     lot = db.query(FutureCropLot).filter(FutureCropLot.id == lot_id).first()
@@ -121,9 +154,9 @@ def get_bids_for_farmer_lot(
 def withdraw_bid(
     bid_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.BUYER)),
+    current_user: User = Depends(require_role(UserRole.BUYER, UserRole.FARMER)),
 ):
-    """Withdraw a submitted bid (Buyer Owner only, status SUBMITTED)."""
+    """Withdraw a submitted bid (Bid Owner only, status SUBMITTED)."""
     bid = db.query(Bid).filter(Bid.id == bid_id).first()
     if not bid:
         raise HTTPException(
@@ -217,6 +250,21 @@ def accept_bid(
                 status=ContactSharingStatus.PENDING,
             )
             db.add(contact_sharing)
+
+        # Create persistent TradeOrder deal record
+        from ...models.trade_order import TradeOrder, TradeOrderStatus
+        existing_order = db.query(TradeOrder).filter(TradeOrder.bid_id == bid.id).first()
+        if not existing_order:
+            trade_order = TradeOrder(
+                bid_id=bid.id,
+                future_crop_lot_id=lot.id,
+                buyer_id=bid.buyer_id,
+                farmer_id=lot.farmer_id,
+                allocated_quantity_quintals=bid.quantity_quintals,
+                agreed_price_per_quintal=bid.offered_price_per_quintal,
+                status=TradeOrderStatus.CREATED,
+            )
+            db.add(trade_order)
 
     db.commit()
     db.refresh(bid)

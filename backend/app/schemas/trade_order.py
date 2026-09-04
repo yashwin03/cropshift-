@@ -14,8 +14,10 @@ class TradeOrderCancelRequest(BaseModel):
 
 class TradeOrderResponse(BaseModel):
     id: int
-    stock_bid_id: int
-    stock_lot_id: int
+    stock_bid_id: Optional[int] = None
+    stock_lot_id: Optional[int] = None
+    bid_id: Optional[int] = None
+    future_crop_lot_id: Optional[int] = None
     buyer_id: int
     farmer_id: int
     allocated_quantity_quintals: float

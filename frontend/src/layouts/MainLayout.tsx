@@ -55,7 +55,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const farmerNavItems = [
     { path: '/', label: 'Home Dashboard', icon: <IconChartBar size={18} className="text-amber-400" /> },
     { path: '/recommendation', label: 'Crop Simulator', icon: <IconPlant size={18} className="text-emerald-400" />, badge: '3D' },
-    { path: '/analyze', label: 'My Farm Profile', icon: <IconUser size={18} className="text-blue-400" /> },
+    { path: '/farm-info', label: 'My Farm Profile', icon: <IconUser size={18} className="text-blue-400" /> },
     { path: '/profit', label: 'Profit & Market', icon: <IconCoins size={18} className="text-amber-400" /> },
     { path: '/bidding', label: 'Marketplace', icon: <IconStore size={18} className="text-emerald-400" />, isLive: true },
     { path: '/subsidies', label: 'Subsidies & Schemes', icon: <IconFileText size={18} className="text-purple-400" /> },
@@ -158,7 +158,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
           <button
             type="button"
-            onClick={() => navigate('/analyze')}
+            onClick={() => navigate('/farm-info')}
             className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 transition-colors"
           >
             <span>⚙️</span> Profile & Settings

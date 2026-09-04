@@ -33,78 +33,111 @@ export default function IvrPage() {
       <div className="space-y-3">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-primary-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
         >
           <span>←</span> Back to Dashboard
         </Link>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-bold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Works without internet</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
             Voice Advisory & Offline Support
           </h1>
 
-          <p className="text-gray-600 text-base md:text-lg max-w-xl font-medium">
+          <p className="text-slate-300 text-base md:text-lg max-w-xl font-medium">
             Talk to CropShift over a phone call. Get crop advice through a phone call, even when internet is unavailable.
           </p>
         </div>
       </div>
 
       {/* Main Slide-to-Call Primary Action Card */}
-      <Card className="border-green-200 bg-gradient-to-b from-green-50/50 to-white shadow-sm p-6 md:p-8 space-y-6">
+      <Card className="border-emerald-500/30 bg-slate-900/90 shadow-2xl p-6 md:p-8 space-y-6">
         {!hasTriggeredCall ? (
           <div className="space-y-6">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <span>📞</span>
                   <span>Get CropShift advice over a phone call</span>
                 </h2>
-                <span className="text-xs font-mono font-bold bg-green-100 text-green-800 px-3 py-1 rounded-full border border-green-300">
+                <span className="text-xs font-mono font-bold bg-amber-950 text-amber-300 px-3 py-1 rounded-full border border-amber-500/40">
                   PIN: {EXOTEL_PIN}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Works through a cellular call to <strong>09513886363</strong> with PIN <strong>8618-8551-17</strong>. Your internet connection is not required during the call.
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Works through a cellular call to <strong className="text-emerald-400 font-mono">09513886363</strong> with PIN <strong className="text-amber-400 font-mono">8618-8551-17</strong>. Your internet connection is not required during the call.
               </p>
             </div>
 
-            {/* Three Simple Capability Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* Six IVR Capability Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
               {/* Option 1: Crop Recommendation */}
-              <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-2xs hover:border-green-300 transition-all space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-green-100 text-green-800 flex items-center justify-center font-bold text-sm">
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
                   1
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm">Crop Recommendation</h3>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Get crop guidance through the IVR.
+                <h3 className="font-bold text-white text-sm">Crop Recommendation</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Hear tailored oilseed recommendation (Groundnut / Castor scenarios).
                 </p>
               </div>
 
-              {/* Option 2: Market Prices */}
-              <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-2xs hover:border-green-300 transition-all space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm">
+              {/* Option 2: Weather Report */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-950 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold text-sm">
                   2
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm">Market Prices</h3>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Hear the predefined market-price information.
+                <h3 className="font-bold text-white text-sm">Weather Report</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Regional weather advisory for rainfall and temperature.
                 </p>
               </div>
 
-              {/* Option 3: Government Schemes */}
-              <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-2xs hover:border-green-300 transition-all space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+              {/* Option 3: Mandi / Market Prices */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-950 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm">
                   3
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm">Government Schemes</h3>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Hear available demo scheme information.
+                <h3 className="font-bold text-white text-sm">Mandi & Market Prices</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  APMC modal, minimum, and maximum commodity prices.
+                </p>
+              </div>
+
+              {/* Option 4: Government Schemes */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-950 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">
+                  4
+                </div>
+                <h3 className="font-bold text-white text-sm">Government Schemes</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  PM-KISAN, Soil Health Card, and oilseed subsidy guidance.
+                </p>
+              </div>
+
+              {/* Option 5: Crop Growing Advisory */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-950 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold text-sm">
+                  5
+                </div>
+                <h3 className="font-bold text-white text-sm">Farm Advisory</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Irrigation, soil nutrient, and crop protection guidance.
+                </p>
+              </div>
+
+              {/* Option 6: Repeat Main Menu */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center font-bold text-sm">
+                  6
+                </div>
+                <h3 className="font-bold text-white text-sm">Repeat Menu</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Re-play main menu voice prompt options.
                 </p>
               </div>
             </div>
@@ -116,17 +149,17 @@ export default function IvrPage() {
                 label="Slide to Call →"
                 activatedLabel="Connecting Phone Dialer..."
               />
-              <p className="text-center text-xs font-medium text-gray-500">
+              <p className="text-center text-xs font-medium text-slate-300">
                 You'll be connected through your phone's normal calling system.
               </p>
             </div>
 
             {/* Direct fallback helpline link */}
-            <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <span className="text-xs text-gray-500">Or tap to dial helpline directly:</span>
+            <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span className="text-xs text-slate-300">Or tap to dial helpline directly:</span>
               <a
                 href={`tel:${EXOTEL_PHONE_NUMBER}`}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-primary-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl transition-colors min-h-[44px] w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors min-h-[44px] w-full sm:w-auto"
               >
                 <span aria-hidden="true">📞</span>
                 <span>Call {EXOTEL_PHONE_DISPLAY}</span>
@@ -136,18 +169,18 @@ export default function IvrPage() {
         ) : (
           /* Feedback state after sliding */
           <div className="space-y-6 text-center py-2" data-testid="call-triggered-feedback">
-            <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm">
+            <div className="w-16 h-16 bg-emerald-950 text-emerald-400 border border-emerald-500/40 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm">
               📞
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-white">
                 Phone Dialer Triggered
               </h2>
-              <p className="text-base text-gray-700 font-semibold">
-                Calling: <span className="text-primary-800">{EXOTEL_PHONE_DISPLAY}</span>
+              <p className="text-base text-slate-200 font-semibold">
+                Calling: <span className="text-emerald-400 font-mono">{EXOTEL_PHONE_DISPLAY}</span>
               </p>
-              <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
                 On your mobile phone, the native dialer has been opened to connect over the cellular network. The voice advisory interaction takes place through the phone network without requiring internet.
               </p>
             </div>
@@ -155,14 +188,14 @@ export default function IvrPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <a
                 href={`tel:${EXOTEL_PHONE_NUMBER}`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-primary-700 hover:bg-primary-800 rounded-xl shadow transition-colors min-h-[44px] w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow transition-colors min-h-[44px] w-full sm:w-auto"
               >
                 <span>Dial Again</span>
               </a>
               <Button
                 variant="outline"
                 onClick={handleReset}
-                className="min-h-[44px] w-full sm:w-auto text-sm"
+                className="min-h-[44px] w-full sm:w-auto text-sm bg-slate-950 text-slate-200 border-slate-700 hover:bg-slate-800"
               >
                 Reset Control
               </Button>
@@ -170,10 +203,6 @@ export default function IvrPage() {
           </div>
         )}
       </Card>
-
-      {/* Connectivity & Service Status */}
-      <ConnectivityInfo />
     </div>
   );
 }
-

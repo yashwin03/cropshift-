@@ -6,9 +6,13 @@ import BiddingPage from '../pages/BiddingPage';
 import { AuthProvider } from '../contexts/AuthContext';
 import * as biddingService from '../services/biddingService';
 import * as stockLotService from '../services/stockLotService';
+import * as stockBidService from '../services/stockBidService';
+import * as tradeOrderService from '../services/tradeOrderService';
 
 vi.mock('../services/biddingService');
 vi.mock('../services/stockLotService');
+vi.mock('../services/stockBidService');
+vi.mock('../services/tradeOrderService');
 
 const mockFutureLot = {
   id: 10,
@@ -67,22 +71,32 @@ const mockOpenStockLot = {
 describe('Phase 7B — StockLot & Harvest UI Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (biddingService.getFarmerFutureCropLotsMe as any).mockResolvedValue([mockFutureLot]);
-    (biddingService.getBidsForFarmerLot as any).mockResolvedValue([]);
-    (stockLotService.getFarmerStockLotsMe as any).mockResolvedValue([mockStockLot]);
-    (stockLotService.getOpenStockLots as any).mockResolvedValue([mockOpenStockLot]);
-    (biddingService.getOpenFutureCropLots as any).mockResolvedValue([]);
-    (biddingService.getMyBids as any).mockResolvedValue([]);
+    vi.mocked(biddingService.getFarmerFutureCropLotsMe).mockImplementation(async () => [mockFutureLot as any]);
+    vi.mocked(biddingService.getBidsForFarmerLot).mockImplementation(async () => []);
+    vi.mocked(stockLotService.getFarmerStockLotsMe).mockImplementation(async () => [mockStockLot as any]);
+    vi.mocked(stockLotService.getOpenStockLots).mockImplementation(async () => [mockOpenStockLot as any]);
+    vi.mocked(biddingService.getOpenFutureCropLots).mockImplementation(async () => []);
+    vi.mocked(biddingService.getMyBids).mockImplementation(async () => []);
+    vi.mocked(stockBidService.getFarmerStockLotBids).mockImplementation(async () => []);
+    vi.mocked(tradeOrderService.getMyTradeOrders).mockImplementation(async () => []);
   });
 
-  it('1. Farmer view renders Mark as Harvested CTA on open future crop lot', async () => {
-    render(
+  const renderPageAsFarmer = () => {
+    const userObj = { id: 1, email: 'farmer@test.com', role: 'FARMER', username: 'farmer1' };
+    localStorage.setItem('user', JSON.stringify(userObj));
+    localStorage.setItem('cropshift_user', JSON.stringify(userObj));
+    localStorage.setItem('cropshift_active_role', 'farmer');
+    return render(
       <MemoryRouter>
         <AuthProvider>
           <BiddingPage />
         </AuthProvider>
       </MemoryRouter>
     );
+  };
+
+  it('1. Farmer view renders Mark as Harvested CTA on open future crop lot', async () => {
+    renderPageAsFarmer();
 
     await waitFor(() => {
       expect(screen.getByText('Groundnut (Kadir-6)')).toBeInTheDocument();
@@ -91,13 +105,7 @@ describe('Phase 7B — StockLot & Harvest UI Integration Tests', () => {
   });
 
   it('2. Clicking Mark as Harvested opens harvest recording modal', async () => {
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <BiddingPage />
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderPageAsFarmer();
 
     await waitFor(() => {
       expect(screen.getByText('🌾 Mark as Harvested')).toBeInTheDocument();
@@ -112,13 +120,7 @@ describe('Phase 7B — StockLot & Harvest UI Integration Tests', () => {
   it('3. Submitting harvest modal calls harvestFutureCropLot API', async () => {
     (stockLotService.harvestFutureCropLot as any).mockResolvedValue(mockStockLot);
 
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <BiddingPage />
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderPageAsFarmer();
 
     await waitFor(() => {
       expect(screen.getByText('🌾 Mark as Harvested')).toBeInTheDocument();
@@ -141,19 +143,13 @@ describe('Phase 7B — StockLot & Harvest UI Integration Tests', () => {
   });
 
   it('4. Farmer can view Harvested Stock Inventory tab with draft stock lot', async () => {
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <BiddingPage />
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderPageAsFarmer();
 
     await waitFor(() => {
       expect(screen.getByText(/Harvested Stock Inventory/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/Harvested Stock Inventory/i));
+    fireEvent.click(screen.getByRole('button', { name: /Harvest.*Stock/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Draft Harvested Stock')).toBeInTheDocument();
@@ -167,19 +163,13 @@ describe('Phase 7B — StockLot & Harvest UI Integration Tests', () => {
       status: 'AVAILABLE'
     });
 
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <BiddingPage />
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderPageAsFarmer();
 
     await waitFor(() => {
       expect(screen.getByText(/Harvested Stock Inventory/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/Harvested Stock Inventory/i));
+    fireEvent.click(screen.getByRole('button', { name: /Harvest.*Stock/i }));
 
     await waitFor(() => {
       expect(screen.getByText('📢 Publish Stock')).toBeInTheDocument();

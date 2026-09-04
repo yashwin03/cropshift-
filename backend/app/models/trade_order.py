@@ -26,8 +26,10 @@ class TradeOrder(Base):
     __tablename__ = "trade_order"
 
     id = Column(Integer, primary_key=True, index=True)
-    stock_bid_id = Column(Integer, ForeignKey("stock_bid.id"), nullable=False, unique=True, index=True)
-    stock_lot_id = Column(Integer, ForeignKey("stock_lot.id"), nullable=False, index=True)
+    stock_bid_id = Column(Integer, ForeignKey("stock_bid.id"), nullable=True, unique=True, index=True)
+    stock_lot_id = Column(Integer, ForeignKey("stock_lot.id"), nullable=True, index=True)
+    bid_id = Column(Integer, ForeignKey("bid.id"), nullable=True, unique=True, index=True)
+    future_crop_lot_id = Column(Integer, ForeignKey("future_crop_lot.id"), nullable=True, index=True)
     buyer_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
     farmer_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
 
@@ -45,5 +47,7 @@ class TradeOrder(Base):
     # Relationships
     stock_bid = relationship("StockBid")
     stock_lot = relationship("StockLot")
+    bid = relationship("Bid")
+    future_crop_lot = relationship("FutureCropLot")
     buyer = relationship("User", foreign_keys=[buyer_id])
     farmer = relationship("User", foreign_keys=[farmer_id])
