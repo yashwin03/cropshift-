@@ -494,7 +494,10 @@ def seed_db(session: Session) -> None:
     from sqlalchemy import text
     tables = ['user', 'crop', 'farmer', 'farm', 'market', 'subsidy', 'peer_proof']
     for t in tables:
-        session.execute(text(f"SELECT setval('{t}_id_seq', (SELECT COALESCE(MAX(id), 1) FROM \"{t}\"));"))
+        try:
+            session.execute(text(f"SELECT setval(pg_get_serial_sequence('\"{t}\"', 'id'), (SELECT COALESCE(MAX(id), 1) FROM \"{t}\"));"))
+        except Exception as seq_err:
+            logger.warning(f"Sequence sync note for {t}: {seq_err}")
     session.commit()
 
     logger.info("Seed complete.")
