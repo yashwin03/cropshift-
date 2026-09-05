@@ -13,10 +13,7 @@ services:
           name: cropshift-db
           property: connectionString
       - key: CORS_ORIGINS
-        fromService:
-          type: web
-          name: cropshift-frontend
-          property: url
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ALGORITHM
@@ -37,10 +34,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: cropshift-backend
-          property: url
+        sync: false
 
 databases:
   - name: cropshift-db
