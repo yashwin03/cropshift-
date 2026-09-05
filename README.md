@@ -11,6 +11,7 @@
 
 CropShift is a digital agricultural intelligence and market-access platform designed to make **oilseed cultivation more attractive** by combining crop recommendation, comparative crop economics, market intelligence, peer-farmer evidence, geospatial analysis, 3D visualization, and farmer-buyer marketplace capabilities.
 
+Live Demo: https://cropshift-frontend.onrender.com
 ---
 
 ## 📌 Official Problem Statement
