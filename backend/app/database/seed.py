@@ -51,13 +51,20 @@ def _point(lon: float, lat: float) -> WKTElement:
 def _get_or_create(session: Session, model, pk_value: int, **kwargs):
     """Fetch by pk or username/name; if missing, create and add to session."""
     obj = session.get(model, pk_value)
-    if obj is None and "username" in kwargs:
+    if obj is None and "username" in kwargs and hasattr(model, "username"):
         obj = session.query(model).filter_by(username=kwargs["username"]).first()
-    if obj is None and "name" in kwargs:
+    if obj is None and "name" in kwargs and hasattr(model, "name"):
         obj = session.query(model).filter_by(name=kwargs["name"]).first()
+    
+    valid_keys = {c.key for c in model.__table__.columns}
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in valid_keys}
+
     if obj is None:
-        obj = model(id=pk_value, **kwargs)
+        obj = model(id=pk_value, **filtered_kwargs)
         session.add(obj)
+    else:
+        for k, v in filtered_kwargs.items():
+            setattr(obj, k, v)
     return obj
 
 
@@ -94,27 +101,31 @@ USERS = [
 
 CROPS = [
     # 1. Paddy (non-oilseed baseline shift source)
-    dict(id=1, name="Paddy", crop_type=CropType.CEREAL, season="Kharif", expected_yield_range="18 - 25 Quintal / acre", water_requirement_level="HIGH"),
+    dict(id=1, name="Paddy", crop_type=CropType.CEREAL, season="Kharif", water_requirement="HIGH", is_oilseed=False),
     # 9 Primary Oilseeds + Safflower + Niger + Linseed + Sesame Black
-    dict(id=2, name="Groundnut", crop_type=CropType.OILSEED, season="Kharif / Rabi", expected_yield_range="8 - 12 Quintal / acre", water_requirement_level="MEDIUM"),
-    dict(id=3, name="Sunflower", crop_type=CropType.OILSEED, season="Rabi", expected_yield_range="6 - 10 Quintal / acre", water_requirement_level="MEDIUM"),
-    dict(id=4, name="Soybean", crop_type=CropType.OILSEED, season="Kharif", expected_yield_range="7 - 10 Quintal / acre", water_requirement_level="MEDIUM"),
-    dict(id=5, name="Mustard", crop_type=CropType.OILSEED, season="Rabi", expected_yield_range="5 - 8 Quintal / acre", water_requirement_level="LOW"),
-    dict(id=6, name="Sesame", crop_type=CropType.OILSEED, season="Kharif / Summer", expected_yield_range="3 - 6 Quintal / acre", water_requirement_level="LOW"),
-    dict(id=7, name="Maize", crop_type=CropType.CEREAL, season="Kharif", expected_yield_range="20 - 30 Quintal / acre", water_requirement_level="MEDIUM"),
-    dict(id=8, name="Safflower", crop_type=CropType.OILSEED, season="Rabi", expected_yield_range="5 - 9 Quintal / acre", water_requirement_level="LOW"),
-    dict(id=9, name="Niger", crop_type=CropType.OILSEED, season="Kharif", expected_yield_range="3 - 5 Quintal / acre", water_requirement_level="LOW"),
-    dict(id=10, name="Castor", crop_type=CropType.OILSEED, season="Kharif / Rabi", expected_yield_range="10 - 15 Quintal / acre", water_requirement_level="MEDIUM"),
-    dict(id=11, name="Linseed", crop_type=CropType.OILSEED, season="Rabi", expected_yield_range="4 - 7 Quintal / acre", water_requirement_level="LOW"),
-    dict(id=12, name="Sesame (Black)", crop_type=CropType.OILSEED, season="Kharif", expected_yield_range="3 - 6 Quintal / acre", water_requirement_level="LOW"),
+    dict(id=2, name="Groundnut", crop_type=CropType.OILSEED, season="Kharif / Rabi", water_requirement="MEDIUM", is_oilseed=True),
+    dict(id=3, name="Sunflower", crop_type=CropType.OILSEED, season="Rabi", water_requirement="MEDIUM", is_oilseed=True),
+    dict(id=4, name="Soybean", crop_type=CropType.OILSEED, season="Kharif", water_requirement="MEDIUM", is_oilseed=True),
+    dict(id=5, name="Mustard", crop_type=CropType.OILSEED, season="Rabi", water_requirement="LOW", is_oilseed=True),
+    dict(id=6, name="Sesame", crop_type=CropType.OILSEED, season="Kharif / Summer", water_requirement="LOW", is_oilseed=True),
+    dict(id=7, name="Maize", crop_type=CropType.CEREAL, season="Kharif", water_requirement="MEDIUM", is_oilseed=False),
+    dict(id=8, name="Safflower", crop_type=CropType.OILSEED, season="Rabi", water_requirement="LOW", is_oilseed=True),
+    dict(id=9, name="Niger", crop_type=CropType.OILSEED, season="Kharif", water_requirement="LOW", is_oilseed=True),
+    dict(id=10, name="Castor", crop_type=CropType.OILSEED, season="Kharif / Rabi", water_requirement="MEDIUM", is_oilseed=True),
+    dict(id=11, name="Linseed", crop_type=CropType.OILSEED, season="Rabi", water_requirement="LOW", is_oilseed=True),
+    dict(id=12, name="Sesame (Black)", crop_type=CropType.OILSEED, season="Kharif", water_requirement="LOW", is_oilseed=True),
 ]
 
 FARMERS = [
-    dict(id=1, user_id=1, district="Dharwad", state="Karnataka", phone="9876543210"),
+    dict(id=1, name="Raju Naik", district="Dharwad", state="Karnataka", phone="9876543210", language="kn"),
+    dict(id=2, name="Suresh Gowda", district="Haveri", state="Karnataka", phone="9876543211", language="kn"),
+    dict(id=3, name="Ramesh Patil", district="Dharwad", state="Karnataka", phone="9876543212", language="kn"),
 ]
 
 FARMS = [
-    dict(id=1, farmer_id=1, name="Green Field Farm", land_area_acre=2.5, location=_point(75.0078, 15.4589), district="Dharwad", state="Karnataka", water_availability=True, soil_type="Red Laterite"),
+    dict(id=1, farmer_id=1, current_crop_id=1, name="Green Field Farm", land_area_acre=1.0, location=_point(75.0078, 15.4589), district="Dharwad", state="Karnataka", water_availability=True, soil_type="Red Laterite"),
+    dict(id=2, farmer_id=2, current_crop_id=1, name="Haveri Agro Farm", land_area_acre=2.0, location=_point(75.4000, 14.7960), district="Haveri", state="Karnataka", water_availability=True, soil_type="Black Cotton"),
+    dict(id=3, farmer_id=3, current_crop_id=1, name="Dharwad Dryland Farm", land_area_acre=3.0, location=_point(75.0078, 15.4589), district="Dharwad", state="Karnataka", water_availability=False, soil_type="Red Laterite"),
 ]
 
 CROP_ECONOMICS = [
